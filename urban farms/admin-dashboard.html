@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urban Farms — Admin Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--forest:#1E3420;--forest-deep:#122010;--gold:#C79A3E;--gold-light:#E7C878;--rust:#9C3A22;--rust-light:#C1552E;--cream:#F7F1E1;--cream-soft:#FBF8EF;--sage:#6C8752;}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--cream);color:#211D15;min-height:100vh;}
+.top-bar{background:var(--forest-deep);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:10px;}
+.top-bar h1{font-size:1.15rem;color:var(--gold-light);}
+.top-bar .user-info{font-size:0.82rem;color:rgba(247,241,225,0.7);}
+.top-bar .actions{display:flex;gap:8px;flex-wrap:wrap;}
+.top-bar .btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:7px 14px;border-radius:100px;font-size:0.78rem;cursor:pointer;font-weight:600;transition:all .2s;}
+.top-bar .btn:hover{background:rgba(255,255,255,0.2);}
+.top-bar .btn-danger{background:var(--rust);border-color:var(--rust);}
+.top-bar .btn-danger:hover{background:var(--rust-light);}
+.container{max-width:1200px;margin:0 auto;padding:16px 20px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+.stat-card{background:#fff;border-radius:12px;padding:14px;text-align:center;border:1px solid rgba(33,29,21,0.06);box-shadow:0 2px 6px rgba(18,32,16,0.04);}
+.stat-card b{display:block;font-size:1.4rem;color:var(--rust);}
+.stat-card span{font-size:0.72rem;color:#5a5646;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
+.stat-card.paid b{color:var(--sage);}
+.stat-card.pending b{color:#d97706;}
+.stat-card.partial b{color:#2563eb;}
+.tab-bar{display:flex;gap:4px;background:var(--cream);border-radius:12px;padding:4px;margin-bottom:18px;border:1px solid rgba(33,29,21,0.08);overflow-x:auto;}
+.tab{flex-shrink:0;padding:9px 16px;text-align:center;border-radius:10px;border:none;background:transparent;font-weight:600;font-size:0.82rem;color:#5a5646;cursor:pointer;white-space:nowrap;}
+.tab.active{background:#fff;color:var(--forest);box-shadow:0 2px 6px rgba(18,32,16,0.1);}
+.section{display:none;}
+.section.active{display:block;}
+.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.filters select,.filters input{padding:8px 12px;border-radius:10px;border:1.5px solid rgba(33,29,21,0.12);font-size:0.85rem;background:var(--cream-soft);}
+.filters input:focus,.filters select:focus{outline:none;border-color:var(--gold);}
+.table-wrap{overflow-x:auto;background:#fff;border-radius:14px;border:1px solid rgba(33,29,21,0.06);}
+table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+th,td{padding:10px 10px;text-align:left;border-bottom:1px solid rgba(33,29,21,0.06);}
+th{color:var(--rust);font-weight:700;font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;background:rgba(247,241,225,0.5);position:sticky;top:0;white-space:nowrap;}
+tr:hover td{background:rgba(247,241,225,0.3);}
+.badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:0.68rem;font-weight:600;}
+.badge-paid{background:#d1fae5;color:#065f46;}
+.badge-partial{background:#dbeafe;color:#1e40af;}
+.badge-pending{background:#fef3c7;color:#92400e;}
+.badge-delivered{background:#d1fae5;color:#065f46;}
+.badge-assigned{background:#dbeafe;color:#1e40af;}
+.badge-out_for_delivery{background:#fce7f3;color:#9d174d;}
+.badge-pending-del{background:#fef3c7;color:#92400e;}
+.btn-sm{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:none;font-size:0.72rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-sm-primary{background:var(--rust);color:#fff;}
+.btn-sm-primary:hover{background:var(--rust-light);}
+.btn-sm-secondary{background:var(--cream);color:var(--forest);border:1px solid rgba(33,29,21,0.12);}
+.btn-sm-secondary:hover{background:var(--forest);color:#fff;}
+.btn-sm-success{background:var(--sage);color:#fff;}
+.btn-sm-success:hover{background:#4a6e3a;}
+.btn-sm-warn{background:#f59e0b;color:#fff;}
+.btn-sm-warn:hover{background:#d97706;}
+.worker-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+.worker-card{background:#fff;border-radius:12px;padding:14px;border:1px solid rgba(33,29,21,0.06);}
+.worker-card .wc-name{font-weight:700;font-size:0.95rem;}
+.worker-card .wc-phone{font-size:0.82rem;color:#5a5646;}
+.worker-card .wc-stats{display:flex;gap:10px;margin-top:8px;font-size:0.78rem;}
+.worker-card .wc-stats span{background:var(--cream);padding:3px 8px;border-radius:6px;}
+.worker-card .wc-actions{margin-top:10px;display:flex;gap:6px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;border-radius:18px;padding:28px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;}
+.modal-box h3{margin-bottom:6px;color:var(--forest-deep);}
+.modal-box .form-group{margin-bottom:14px;}
+.modal-box .form-group label{display:block;font-size:0.82rem;font-weight:600;color:var(--forest-deep);margin-bottom:5px;}
+.modal-box .form-group input,.modal-box .form-group select{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid rgba(33,29,21,0.12);font-size:0.9rem;background:var(--cream-soft);}
+.modal-box .form-group input:focus,.modal-box .form-group select:focus{outline:none;border-color:var(--gold);}
+.modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:100px;border:none;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{background:var(--rust-light);}
+.btn-secondary{background:var(--cream);color:var(--forest);border:1.5px solid var(--forest);}
+.btn-secondary:hover{background:var(--forest);color:#fff;}
+.empty-state{text-align:center;padding:40px;color:#5a5646;font-size:0.9rem;}
+.photo-thumb{width:50px;height:50px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid var(--cream-deep);}
+.photo-full{max-width:100%;border-radius:12px;margin-top:12px;}
+.delivery-control-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px;}
+.delivery-control-card{background:#fff;border:1px solid rgba(33,29,21,.08);border-radius:12px;padding:14px;}.delivery-control-card b{display:block;font-size:1.4rem;color:var(--rust);}.delivery-control-card span{font-size:.72rem;text-transform:uppercase;color:#5a5646;font-weight:700;letter-spacing:.04em;}
+.delivery-alert{background:#fff7ed;border-left:4px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:10px;font-size:.84rem;}.delivery-live{background:#ecfdf5;border-left:4px solid var(--sage);border-radius:10px;padding:12px;margin-bottom:10px;font-size:.84rem;}.delivery-control-list{display:flex;flex-direction:column;gap:10px;}@media(max-width:700px){.delivery-control-grid{grid-template-columns:repeat(2,1fr);}}
+.hidden{display:none;}
+@media(max-width:700px){
+  .stats-grid{grid-template-columns:repeat(3,1fr);}
+  .top-bar h1{font-size:1rem;}
+}
+
+async function loadBEVerifications() {
+  try {
+    const data = await api('/api/admin/orders?status=all');
+    const orders = data.orders || [];
+    const pending = orders.filter(o => o.reviewStatus && String(o.reviewStatus).toLowerCase().startsWith('pending'));
+    const tbody = document.getElementById('verificationsBody');
+    if (pending.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#888;">No orders pending BE verification.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pending.map(function(o) {
+      const addr = (o.address || '') + (o.area ? ', ' + o.area : '') + ', ' + (o.city || '') + ' — ' + (o.pincode || '');
+      return '<tr>' +
+        '<td><b style="font-family:monospace;font-size:0.78rem;">' + o.id + '</b></td>' +
+        '<td style="white-space:nowrap;">' + new Date(o.createdAt).toLocaleDateString('en-IN') + '</td>' +
+        '<td><b>' + (o.customerName || '-') + '</b><br><span style="font-size:0.75rem;color:#5a5646;">' + (o.customerPhone || '-') + '</span></td>' +
+        '<td>' + o.product + ' — ' + o.quantity + ' ' + o.unit + '</td>' +
+        '<td><b>₹' + o.total + '</b></td>' +
+        '<td style="max-width:260px;white-space:normal;">' + addr + '</td>' +
+        '<td>' + (o.deliveryDate || '-') + (o.deliverySlot ? ' · ' + o.deliverySlot : '') + '</td>' +
+        '<td><span class="badge badge-pending">' + (o.reviewStatus || 'pending') + '</span></td>' +
+        '<td>' + (o.beNotifiedAt ? (new Date(o.beNotifiedAt).toLocaleString('en-IN')) + ' · ' + (o.beNotifiedCount || 0) + ' notified' : '—') + '</td>' +
+        '<td><div style="display:flex;gap:6px;"><button class="btn-sm btn-sm-secondary" onclick="viewOrder(\'' + o.id + '\')">View</button><button class="btn-sm btn-sm-warn" onclick="contactBENote(\'' + o.id + '\')">Notify BEs</button></div></td>' +
+        '</tr>';
+    }).join('');
+  } catch (err) { document.getElementById('verificationsBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--rust);">⚠ ' + err.message + '</td></tr>'; }
+}
+
+function contactBENote(orderId) {
+  if (!confirm('Notify all BEs again about order ' + orderId + '?')) return;
+  fetch(API + '/api/admin/order/' + orderId + '/notify-bes', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }).then(r => r.json()).then(d => { if (d.ok) alert('BEs notified'); else alert(d.error || 'Notify failed'); }).catch(e => alert(e.message));
+}
+.translator-wrapper{position:relative;display:inline-flex;align-items:center;}
+.translator-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .2s ease;}
+.translator-toggle:hover{background:rgba(255,255,255,0.16);}
+.translator-menu{position:absolute;top:calc(100% + 10px);right:0;display:none;flex-direction:column;gap:8px;padding:10px;background:rgba(18,32,16,0.96);border:1px solid rgba(255,255,255,0.12);border-radius:18px;min-width:160px;z-index:1000;}
+.translator-menu.open{display:flex;}
+.translator-menu .lang-btn{width:100%;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;text-align:left;}
+.translator-menu .lang-btn.active,.translator-menu .lang-btn:hover{background:rgba(231,200,120,0.18);border-color:rgba(231,200,120,0.35);}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div>
+    <h1>🏡 Urban Farms — Admin Dashboard</h1>
+    <div class="user-info" id="userInfo">Loading...</div>
+  </div>
+  <div class="actions">
+    <div class="translator-wrapper">
+      <button class="translator-toggle" id="translatorToggle" aria-expanded="false">
+        <span>🌐</span> <span class="translator-label">EN</span>
+      </button>
+      <div class="translator-menu" id="translatorMenu">
+        <button class="lang-btn active" data-lang="en">🇬🇧 English</button>
+        <button class="lang-btn" data-lang="te">🌿 తెలుగు</button>
+        <button class="lang-btn" data-lang="hi">🇮🇳 हिंदी</button>
+      </div>
+    </div>
+    <button class="btn" onclick="exportOrders()">📥 Export Orders</button>
+    <button class="btn" onclick="exportWorkers()">📥 Export Workers</button>
+    <button class="btn" onclick="exportCustomers()">📥 Export Customers</button>
+    <button class="btn btn-danger" onclick="logout()">🚪 Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><b id="totalOrders">0</b><span>Total Orders</span></div>
+    <div class="stat-card"><b id="totalRevenue">₹0</b><span>Revenue</span></div>
+    <div class="stat-card paid"><b id="paidOrders">0</b><span>Paid</span></div>
+    <div class="stat-card partial"><b id="partialOrders">0</b><span>Partial</span></div>
+    <div class="stat-card pending"><b id="pendingPayments">0</b><span>Pending</span></div>
+    <div class="stat-card"><b id="deliveredCount">0</b><span>Delivered</span></div>
+    <div class="stat-card pending"><b id="pendingDeliveries">0</b><span>To Deliver</span></div>
+    <div class="stat-card"><b id="workerCount">0</b><span>BEs</span></div>
+    <div class="stat-card"><b id="pendingBeVerifications">0</b><span>BE Verifications</span></div>
+    <div class="stat-card"><b id="customerCount">0</b><span>Customers</span></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab" data-tab="deliveries">Delivery Control</button>
+    <button class="tab active" data-tab="orders">📦 Orders</button>
+    <button class="tab" data-tab="workers">🧑‍💼 BEs</button>
+    <button class="tab" data-tab="shops">🏪 Shops</button>
+    <button class="tab" data-tab="verifications">🛎️ BE Verifications</button>
+    <button class="tab" data-tab="audit">📜 Verifications Audit</button>
+    <button class="tab" data-tab="reviews">🛡️ Pending Reviews</button>
+    <button class="tab" data-tab="customers">👥 Customers</button>
+    <button class="tab" data-tab="pricing">💰 Pricing</button>
+    <button class="tab" data-tab="inventory">📦 Inventory</button>
+    <button class="tab" data-tab="payment-gateway">💳 Payment Gateway</button>
+    <button class="tab" data-tab="system-audit">🔍 System Audit</button>
+  </div>
+
+  <!-- SHOPS TAB -->
+  <div class="section" id="section-shops">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <h3 style="margin:0;font-size:1rem;">Registered Shops</h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="shopSearch" placeholder="Search shop id, name, phone or area..." style="padding:8px 12px;border-radius:10px;border:1.5px solid rgba(33,29,21,0.12);min-width:220px;" oninput="loadShops(1)">
+        <button class="btn btn-primary btn-sm" onclick="loadShops(1)">Refresh</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Shop ID</th><th>Shop Name</th><th>Owner</th><th>Phone</th><th>Address</th><th>Registered By</th><th>Visits</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="shopsBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;align-items:center;">
+      <button class="btn btn-secondary" id="shopsPrev" onclick="changeShopsPage(-1)">Prev</button>
+      <div id="shopsPager" style="font-weight:700;color:#5a5646;">Page 1</div>
+      <button class="btn btn-secondary" id="shopsNext" onclick="changeShopsPage(1)">Next</button>
+    </div>
+  </div>
+
+  <!-- ORDERS TAB -->
+  <div class="section active" id="section-orders">
+    <div class="filters">
+      <select id="filterStatus" onchange="loadOrders()">
+        <option value="all">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="assigned">Assigned</option>
+        <option value="out_for_delivery">Out for delivery</option>
+        <option value="delivered">Delivered</option>
+      </select>
+      <select id="filterPayment" onchange="loadOrders()">
+        <option value="all">All Payments</option>
+        <option value="paid">Paid</option>
+        <option value="partial">Partial</option>
+        <option value="pending">Pending</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="🔍 Search order / name / phone..." oninput="loadOrders()" style="flex:1;min-width:150px;">
+      <button class="btn btn-primary btn-sm" onclick="loadOrders()">🔄 Refresh</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Bal.</th>
+            <th>Payment</th>
+            <th>Delivery</th>
+            <th>Worker</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- WORKERS TAB -->
+  <div class="section" id="section-workers">
+    <div style="margin-bottom:14px;">
+      <button class="btn btn-primary btn-sm" onclick="showAddWorker()">➕ Add New BE</button>
+    </div>
+    <div class="worker-list" id="workerList"></div>
+  </div>
+
+  <!-- BE VERIFICATIONS TAB -->
+  <div class="section" id="section-verifications">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <h3 style="margin:0;font-size:1rem;">Orders Pending BE Verification</h3>
+      <div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-primary btn-sm" onclick="loadBEVerifications()">Refresh</button><span style="font-size:0.9rem;color:#5a5646;">These require contact & confirmation by a BE — admins should not verify here.</span></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Product & Qty</th>
+            <th>Total</th>
+            <th>Address</th>
+            <th>Delivery</th>
+                <th>Review Status</th>
+                <th>Notified</th>
+                <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="verificationsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PENDING REVIEWS TAB -->
+  <div class="section" id="section-deliveries">
+    <div class="delivery-control-grid">
+      <div class="delivery-control-card"><b id="deliveryActive">0</b><span>Active deliveries</span></div>
+      <div class="delivery-control-card"><b id="deliveryOut">0</b><span>Out for delivery</span></div>
+      <div class="delivery-control-card"><b id="deliveryToday">0</b><span>Scheduled today</span></div>
+      <div class="delivery-control-card"><b id="deliveryAttention">0</b><span>Need attention</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;"><h3 style="margin:0;font-size:1rem;">Live delivery operations</h3><button class="btn btn-primary btn-sm" onclick="loadDeliveryOverview()">Refresh</button></div>
+    <div id="deliveryAttentionList" class="delivery-control-list"></div>
+    <div id="deliveryActiveList" class="delivery-control-list"></div>
+    <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h3 style="margin:0;font-size:1rem;">Inventory</h3><button class="btn btn-secondary btn-sm" onclick="loadInventory()">Refresh stock</button></div>
+    <div id="inventoryList" class="delivery-control-list" style="margin-top:10px;"></div>
+    <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h3 style="margin:0;font-size:1rem;">Customer support</h3><button class="btn btn-secondary btn-sm" onclick="loadSupportTickets()">Refresh tickets</button></div>
+    <div id="supportTicketList" class="delivery-control-list" style="margin-top:10px;"></div>
+    <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h3 style="margin:0;font-size:1rem;">Damaged-product claims</h3><button class="btn btn-secondary btn-sm" onclick="loadDamageClaims()">Refresh claims</button></div>
+    <div id="damageClaimList" class="delivery-control-list" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="section" id="section-reviews">
+    <div style="margin-bottom:14px;">
+      <button class="btn btn-primary btn-sm" onclick="loadPendingReviews()">🔄 Refresh</button>
+      <span style="font-size:0.85rem;color:#5a5646;margin-left:10px;">Deliveries flagged for admin review due to face match or GPS proximity failure</span>
+    </div>
+    <div class="delivery-list" id="reviewsList" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="empty-state">No pending reviews.</div>
+    </div>
+  </div>
+
+  <!-- PRICING TAB -->
+  <div class="section" id="section-pricing">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <h3 style="margin:0;font-size:1rem;">Product Pricing</h3>
+      <div><button class="btn btn-primary btn-sm" onclick="loadPrices()">Refresh</button></div>
+    </div>
+    <div class="table-wrap" style="margin-bottom:12px;">
+      <table>
+        <thead>
+          <tr><th>Product Key</th><th>Name</th><th>Price (₹)</th><th>Unit</th></tr>
+        </thead>
+        <tbody id="pricingBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadPrices()">Cancel</button><button class="btn btn-primary" onclick="savePrices()">Save Prices</button></div>
+  </div>
+
+  <!-- INVENTORY TAB -->
+  <div class="section" id="section-inventory">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <h3 style="margin:0;font-size:1rem;">Inventory / Stock</h3>
+      <div><button class="btn btn-primary btn-sm" onclick="loadInventoryAdmin()">Refresh</button></div>
+    </div>
+    <div class="table-wrap" style="margin-bottom:12px;">
+      <table>
+        <thead>
+          <tr><th>Key</th><th>Name</th><th>Stock (units)</th></tr>
+        </thead>
+        <tbody id="inventoryBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadInventoryAdmin()">Cancel</button><button class="btn btn-primary" onclick="saveInventoryAdmin()">Save Inventory</button></div>
+  </div>
+
+  <div class="section" id="section-payment-gateway">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+      <div>
+        <h3 style="margin:0;font-size:1rem;">Payment Gateway</h3>
+        <p style="margin:6px 0 0;color:#5a5646;max-width:720px;">Configure the real gateway integration here. Keep credentials secure and enable only when ready.</p>
+      </div>
+      <div><button class="btn btn-primary btn-sm" onclick="loadPaymentConfig()">Refresh</button></div>
+    </div>
+    <div class="table-wrap" style="padding:20px;">
+      <div class="form-group">
+        <label>Provider</label>
+        <select id="gatewayProvider" style="width:100%;">
+          <option value="none">None (sandbox)</option>
+          <option value="razorpay">Razorpay</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Enabled</label>
+        <select id="gatewayEnabled" style="width:100%;">
+          <option value="false">Disabled</option>
+          <option value="true">Enabled</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Payment Display Name</label>
+        <input id="gatewayDisplayName" type="text" placeholder="e.g. Urban Farms Checkout" />
+      </div>
+      <div class="form-group">
+        <label>Razorpay Key ID</label>
+        <input id="gatewayKeyId" type="text" placeholder="Enter Razorpay Key ID" />
+      </div>
+      <div class="form-group">
+        <label>Razorpay Key Secret</label>
+        <input id="gatewayKeySecret" type="text" placeholder="Enter Razorpay Key Secret" />
+      </div>
+      <div class="form-group">
+        <label>Notes / Provider instructions</label>
+        <textarea id="gatewayNotes" rows="4" style="width:100%;"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="loadPaymentConfig()">Cancel</button>
+        <button class="btn btn-primary" onclick="savePaymentConfig()">Save Gateway Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="section-audit">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <h3 style="margin:0;font-size:1rem;">BE Verification Audit</h3>
+      <div><button class="btn btn-primary btn-sm" onclick="loadVerificationAudit()">Refresh</button></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Order ID</th><th>Verified By</th><th>Verified At</th><th>Notes</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="auditBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="section-system-audit">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <h3 style="margin:0;font-size:1rem;">System Audit Log</h3>
+      <div><button class="btn btn-primary btn-sm" onclick="loadSystemAudit()">Refresh</button></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Actor</th><th>Action</th><th>When</th></tr></thead>
+        <tbody id="systemAuditBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CUSTOMERS TAB -->
+  <div class="section" id="section-customers">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Phone</th><th>Registered</th><th>Orders</th><th>Total Spent</th><th>Paid Orders</th></tr>
+        </thead>
+        <tbody id="customersBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add/Edit Worker -->
+  <div class="modal-overlay" id="workerModal">
+  <div class="modal-box">
+    <h3 id="workerModalTitle">Add New BE</h3>
+    <p style="font-size:0.85rem;color:#5a5646;margin-bottom:16px;">BE will be registered with these credentials.</p>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="workerName" placeholder="Worker's full name">
+    </div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="tel" id="workerPhone" placeholder="10-digit mobile number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label>Password (min 8 chars)</label>
+      <input type="password" id="workerPass" placeholder="Worker login password">
+    </div>
+    <div class="form-group">
+      <label>BE PIN (min 4 chars)</label>
+      <input type="password" id="workerPin" placeholder="Unique BE identification PIN">
+    </div>
+    <div class="form-group">
+      <label>Assigned Area</label>
+      <input type="text" id="workerArea" placeholder="e.g. Banjara Hills, Kukatpally">
+      <small style="color:#5a5646;display:block;margin-top:4px;">Optional area assignment for the BE’s shop listing and updates.</small>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeWorkerModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWorker()">Save Worker</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Worker Area Assignment -->
+<div class="modal-overlay" id="workerAreaModal">
+  <div class="modal-box">
+    <h3>Assign Area to BE</h3>
+    <div class="form-group">
+      <label>Assigned Area</label>
+      <input type="text" id="workerAreaInput" placeholder="e.g. Banjara Hills, Kukatpally">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="workerAreaNote" rows="3" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid rgba(33,29,21,0.12);background:var(--cream-soft);"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeWorkerAreaModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWorkerArea()">Save Area</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Worker Voice Notes -->
+<div class="modal-overlay" id="workerVoiceModal">
+  <div class="modal-box">
+    <h3>BE Voice Notes</h3>
+    <div id="workerVoiceContent" style="max-height:400px;overflow:auto;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeWorkerVoiceModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Assign Worker -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal-box">
+    <h3>Assign Delivery Worker</h3>
+    <p style="font-size:0.85rem;color:#5a5646;margin-bottom:16px;" id="assignOrderInfo">Order: —</p>
+    <div class="form-group">
+      <label>Select Worker</label>
+      <select id="assignWorkerSelect"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAssign()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Order Detail -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-box">
+    <h3 id="orderModalTitle">Order Details</h3>
+    <div id="orderDetailContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeOrderModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Review Delivery -->
+<div class="modal-overlay" id="reviewModal">
+  <div class="modal-box" style="max-width:600px;">
+    <h3 id="reviewModalTitle">🛡️ Review Delivery Verification</h3>
+    <div id="reviewModalContent"></div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>Admin Notes</label>
+      <textarea id="reviewNotes" placeholder="Add notes about this review decision..." style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid rgba(33,29,21,0.12);font-size:0.9rem;background:var(--cream-soft);min-height:60px;font-family:inherit;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+      <button class="btn btn-sm-warn" onclick="confirmReview('rejected')" style="padding:9px 18px;border-radius:100px;border:none;font-weight:600;font-size:0.85rem;cursor:pointer;">❌ Reject</button>
+      <button class="btn btn-sm-success" onclick="confirmReview('approved')" style="padding:9px 18px;border-radius:100px;border:none;font-weight:600;font-size:0.85rem;cursor:pointer;">✅ Approve Delivery</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let allOrders = [];
+
+function getToken() { return localStorage.getItem('uf_token'); }
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('uf_user')); } catch { return null; }
+}
+const user = getUser();
+const token = getToken();
+if (!token || !user || user.role !== 'admin') {
+  window.location.href = '/login.html';
+}
+document.getElementById('userInfo').textContent = 'Admin: ' + user.name;
+
+async function api(path, opts = {}) {
+  const headers = { 'Authorization': 'Bearer ' + token, ...opts.headers };
+  if (!(opts.body instanceof FormData) && opts.body) headers['Content-Type'] = 'application/json';
+  const res = await fetch(API + path, { ...opts, headers });
+  if (path.includes('export')) return res;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+async function loadStats() {
+  try {
+    const data = await api('/api/admin/stats');
+    const s = data.stats;
+    document.getElementById('totalOrders').textContent = s.totalOrders;
+    document.getElementById('totalRevenue').textContent = '₹' + s.totalRevenue.toLocaleString('en-IN');
+    document.getElementById('paidOrders').textContent = s.paidOrders;
+    document.getElementById('partialOrders').textContent = s.partialOrders;
+    document.getElementById('pendingPayments').textContent = s.pendingOrders;
+    document.getElementById('deliveredCount').textContent = s.deliveredCount;
+    document.getElementById('pendingDeliveries').textContent = s.pendingDeliveries;
+    document.getElementById('workerCount').textContent = s.workerCount;
+    document.getElementById('customerCount').textContent = s.customerCount;
+    if (typeof s.pendingBeVerifications !== 'undefined') document.getElementById('pendingBeVerifications').textContent = s.pendingBeVerifications;
+  } catch (err) { console.error(err); }
+}
+
+async function loadOrders() {
+  try {
+    const status = document.getElementById('filterStatus').value;
+    const payment = document.getElementById('filterPayment').value;
+    const search = document.getElementById('searchInput').value.trim();
+    const q = new URLSearchParams({ status, payment, search }).toString();
+    const data = await api('/api/admin/orders?' + q);
+    allOrders = data.orders || [];
+    const tbody = document.getElementById('ordersBody');
+    if (allOrders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:#888;">No orders found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = allOrders.map(o => '<tr>' +
+      '<td><b style="font-family:monospace;font-size:0.78rem;">' + o.id + '</b></td>' +
+      '<td style="white-space:nowrap;">' + new Date(o.createdAt).toLocaleDateString('en-IN') + '</td>' +
+      '<td><b>' + (o.customerName || '-') + '</b><br><span style="font-size:0.75rem;color:#5a5646;">' + (o.customerPhone || '-') + '</span></td>' +
+      '<td><span class="badge badge-' + o.paymentStatus + '">' + o.product + '</span></td>' +
+      '<td>' + o.quantity + ' ' + o.unit + (o.quantity > 1 ? 's' : '') + '</td>' +
+      '<td><b>₹' + o.total + '</b></td>' +
+      '<td>₹' + o.advance + '</td>' +
+      '<td>₹' + o.balance + '</td>' +
+      '<td><span class="badge badge-' + o.paymentStatus + '">' + o.paymentStatus.charAt(0).toUpperCase() + o.paymentStatus.slice(1) + '</span></td>' +
+      '<td><span class="badge badge-' + (o.deliveryStatus === 'delivered' ? 'delivered' : o.deliveryStatus === 'assigned' ? 'assigned' : o.deliveryStatus === 'out_for_delivery' ? 'out_for_delivery' : 'pending-del') + '">' + o.deliveryStatus.replaceAll('_', ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); }) + '</span></td>' +
+      '<td style="font-size:0.78rem;">' + (o.workerName || '-') + '</td>' +
+      '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">' +
+        '<button class="btn-sm btn-sm-primary" onclick="viewOrder(\'' + o.id + '\')">👁️</button>' +
+        (o.deliveryStatus !== 'delivered' && o.deliveryStatus !== 'assigned' ? '<button class="btn-sm btn-sm-warn" onclick="openAssign(\'' + o.id + '\')">🧑‍💼 Assign</button>' : '') +
+        (o.paymentStatus !== 'paid' ? '<button class="btn-sm btn-sm-success" onclick="markPaid(\'' + o.id + '\')">₹ Paid</button>' : '') +
+        (o.deliveryPhoto ? '<button class="btn-sm btn-sm-secondary" onclick="viewPhoto(\'' + o.id + '\')">📸</button>' : '') +
+      '</div></td></tr>').join('');
+  } catch (err) {
+    document.getElementById('ordersBody').innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--rust);">⚠ ' + err.message + '</td></tr>';
+  }
+}
+
+// Shops: load and view shops, reset owner credentials
+async function loadShops() {
+  try {
+    const data = await api('/api/admin/shops');
+    const shops = data.shops || [];
+    const tbody = document.getElementById('shopsBody');
+    if (!shops.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#888;">No shops registered yet.</td></tr>'; return; }
+    tbody.innerHTML = shops.map(s => '<tr>' +
+      '<td><b style="font-family:monospace;">' + s.id + '</b></td>' +
+      '<td>' + (s.shopName || '-') + '</td>' +
+      '<td>' + (s.ownerName || '-') + '</td>' +
+      '<td>' + (s.ownerPhone || '-') + '</td>' +
+      '<td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (s.address || '-') + '</td>' +
+      '<td>' + (s.registeredByName || '-') + '</td>' +
+      '<td>' + (s.visits || 0) + '</td>' +
+      '<td>' + (s.status || '-') + '</td>' +
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        '<button class="btn-sm btn-sm-secondary" onclick="viewShop(\'' + s.id + '\')">View</button>' +
+        '<button class="btn-sm btn-sm-warn" onclick="resetShopCredentials(\'' + s.id + '\')">Reset Creds</button>' +
+        '<button class="btn-sm btn-sm-primary" onclick="loadShopOrders(\'' + s.id + '\')">Orders</button>' +
+      '</div></td></tr>').join('');
+  } catch (err) { document.getElementById('shopsBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--rust);">⚠ ' + err.message + '</td></tr>'; }
+}
+
+async function viewShop(id) {
+  try {
+    const data = await api('/api/admin/shop/' + id);
+    const s = data.shop;
+    const st = s.stats || { totalOrders: 0, delivered: 0, pendingPayments: 0, partialPayments: 0, completedPayments: 0, revenue: 0 };
+    const content = document.getElementById('orderDetailContent');
+    const destination = (s.latitude != null && s.longitude != null) ? (s.latitude + ',' + s.longitude) : [s.address, s.area, s.city, s.pincode].filter(Boolean).join(', ');
+    const navigateUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(destination);
+    content.innerHTML = '<div style="margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;align-items:center;"><b>' + (s.shopName || '-') + '</b> <a href="' + navigateUrl + '" target="_blank" rel="noopener" class="btn-sm btn-sm-primary">📍 Navigate</a></div>' +
+      '<div><b>Owner:</b> ' + (s.owner?.name || '-') + ' · ' + (s.owner?.phone || '-') + '</div>' +
+      '<div style="margin-top:8px;"><b>Address:</b><br>' + (s.address || '-') + ', ' + (s.area || '') + ', ' + (s.city || '') + ' — ' + (s.pincode || '') + '</div>' +
+      '<div style="margin-top:10px;"><b>Registered by:</b> ' + (s.registeredByName || '-') + ' · At: ' + (s.createdAt ? new Date(s.createdAt).toLocaleString('en-IN') : '-') + '</div>' +
+      '<div style="margin-top:10px;"><b>Visits:</b> ' + (s.visits || 0) + '</div>' +
+      '<div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"><div class="stat-card"><b>' + st.totalOrders + '</b><span>Orders</span></div><div class="stat-card"><b>' + st.delivered + '</b><span>Delivered</span></div><div class="stat-card"><b>₹' + st.revenue + '</b><span>Revenue</span></div></div>' +
+      '<div style="margin-top:10px;padding:10px;background:var(--cream-soft);border-radius:10px;"><b>Payments:</b> Pending ' + st.pendingPayments + ' · Partial ' + st.partialPayments + ' · Completed ' + st.completedPayments + '</div>' +
+      '<div style="margin-top:10px;"><button class="btn-sm btn-sm-primary" onclick="loadShopOrders(\'' + s.id + '\')">View Orders & Update Payments</button></div>' +
+      (s.shopPhoto ? '<div style="margin-top:12px;"><img src="' + s.shopPhoto + '" class="photo-full" alt="Shop photo"></div>' : '');
+    document.getElementById('orderModalTitle').textContent = 'Shop: ' + s.shopName;
+    document.getElementById('orderModal').classList.add('open');
+  } catch (err) { alert(err.message); }
+}
+
+async function resetShopCredentials(id) {
+  if (!confirm('Reset credentials for this shop owner? A new password will be generated and returned.')) return;
+  try {
+    const d = await api('/api/admin/shop/' + id + '/reset-credentials', { method: 'POST' });
+    if (d.ok && d.credentials) {
+      alert('New credentials:\nPhone: ' + d.credentials.phone + '\nPassword: ' + d.credentials.password + '\n\nShare securely with the shop owner.');
+    } else alert('Failed to reset credentials');
+  } catch (err) { alert(err.message); }
+}
+
+async function loadShopOrders(id) {
+  try {
+    const d = await api('/api/admin/shop/' + id + '/orders');
+    const orders = d.orders || [];
+    if (!orders.length) { alert('No orders for this shop yet.'); return; }
+    const html = orders.map(o => '<div style="padding:8px;border-bottom:1px solid rgba(33,29,21,0.04);"><b>' + o.id + '</b> · ' + o.product + ' · Qty: ' + o.quantity + ' · ₹' + o.total + ' · ' + (o.deliveryStatus || '') + '</div>').join('');
+    document.getElementById('orderDetailContent').innerHTML = html; document.getElementById('orderModalTitle').textContent = 'Shop Orders — ' + id; document.getElementById('orderModal').classList.add('open');
+  } catch (err) { alert(err.message); }
+}
+
+// Pricing: load and save
+async function loadPrices() {
+  try {
+    const data = await api('/api/admin/prices');
+    const prices = data.prices || {};
+    // fetch catalog to get product names and units
+    const catalogData = await api('/api/catalog');
+    const products = catalogData.products || [];
+    const tbody = document.getElementById('pricingBody');
+    tbody.innerHTML = products.map(function(p) {
+      const k = p.key; const name = p.name || k; const unit = p.unit || '';
+      const priceVal = typeof prices[k] !== 'undefined' ? prices[k] : (p.price || 0);
+      return '<tr>' +
+        '<td style="font-family:monospace;padding:10px;">' + k + '</td>' +
+        '<td>' + name + '</td>' +
+        '<td><input type="number" min="0" step="0.01" data-key="' + k + '" value="' + priceVal + '" style="width:120px;padding:8px;border-radius:8px;border:1px solid rgba(33,29,21,0.08);"></td>' +
+        '<td>' + unit + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch (err) {
+    document.getElementById('pricingBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--rust);">⚠ ' + err.message + '</td></tr>';
+  }
+}
+
+async function savePrices() {
+  try {
+    const inputs = Array.from(document.querySelectorAll('#pricingBody input[data-key]'));
+    const prices = {};
+    for (const inp of inputs) {
+      const k = inp.dataset.key; const v = Number(inp.value);
+      if (!Number.isFinite(v) || v < 0) { alert('Invalid price for ' + k); return; }
+      prices[k] = Math.round(v * 100) / 100;
+    }
+    const data = await api('/api/admin/prices', { method: 'POST', body: JSON.stringify({ prices }) });
+    alert('Prices updated');
+    loadPrices();
+    loadStats();
+  } catch (err) { alert(err.message); }
+}
+
+// Inventory admin functions
+async function loadInventoryAdmin() {
+  try {
+    const data = await api('/api/admin/inventory');
+    const inventory = data.inventory || {};
+    const catalogData = await api('/api/catalog');
+    const products = catalogData.products || [];
+    const tbody = document.getElementById('inventoryBody');
+    tbody.innerHTML = products.map(function(p) {
+      const k = p.key; const name = p.name || k; const stock = typeof inventory[k] !== 'undefined' ? inventory[k] : 0;
+      return '<tr>' +
+        '<td style="font-family:monospace;padding:10px;">' + k + '</td>' +
+        '<td>' + name + '</td>' +
+        '<td><input type="number" min="0" step="1" data-key="' + k + '" value="' + stock + '" style="width:120px;padding:8px;border-radius:8px;border:1px solid rgba(33,29,21,0.08);"></td>' +
+      '</tr>';
+    }).join('');
+  } catch (err) { document.getElementById('inventoryBody').innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--rust);">⚠ ' + err.message + '</td></tr>'; }
+}
+
+async function saveInventoryAdmin() {
+  try {
+    const inputs = Array.from(document.querySelectorAll('#inventoryBody input[data-key]'));
+    const inventory = {};
+    for (const inp of inputs) {
+      const k = inp.dataset.key; const v = Number(inp.value);
+      if (!Number.isFinite(v) || v < 0) { alert('Invalid stock for ' + k); return; }
+      inventory[k] = Math.max(0, Math.floor(v));
+    }
+    await api('/api/admin/inventory', { method: 'POST', body: JSON.stringify({ inventory }) });
+    alert('Inventory updated');
+    loadInventoryAdmin();
+    loadCatalog();
+  } catch (err) { alert(err.message); }
+}
+
+async function loadPaymentConfig() {
+  try {
+    const data = await api('/api/admin/payment-config');
+    if (!data.ok) throw new Error('Unable to load payment settings');
+    const cfg = data.config || {};
+    document.getElementById('gatewayProvider').value = cfg.provider || 'none';
+    document.getElementById('gatewayEnabled').value = String(cfg.enabled === true);
+    document.getElementById('gatewayDisplayName').value = cfg.providerName || cfg.displayName || '';
+    const credentials = cfg.credentials || {};
+    document.getElementById('gatewayKeyId').value = credentials.keyId || credentials.razorpayKeyId || '';
+    document.getElementById('gatewayKeySecret').value = credentials.keySecret || credentials.razorpayKeySecret || '';
+    document.getElementById('gatewayNotes').value = cfg.notes || '';
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function savePaymentConfig() {
+  try {
+    const provider = document.getElementById('gatewayProvider').value;
+    const enabled = document.getElementById('gatewayEnabled').value === 'true';
+    const providerName = document.getElementById('gatewayDisplayName').value.trim();
+    const keyId = document.getElementById('gatewayKeyId').value.trim();
+    const keySecret = document.getElementById('gatewayKeySecret').value.trim();
+    const notes = document.getElementById('gatewayNotes').value.trim();
+    const config = {
+      provider: provider || 'none',
+      enabled,
+      providerName: providerName || '',
+      credentials: {
+        keyId: keyId || '',
+        keySecret: keySecret || ''
+      },
+      notes: notes || ''
+    };
+    const data = await api('/api/admin/payment-config', { method: 'POST', body: JSON.stringify({ config }) });
+    if (!data.ok) throw new Error(data.error || 'Unable to save payment settings');
+    alert('Payment gateway settings saved');
+    loadPaymentConfig();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function viewOrder(id) {
+  try {
+    const data = await api('/api/admin/order/' + id);
+    const o = data.order;
+    document.getElementById('orderModalTitle').textContent = 'Order: ' + o.id;
+    document.getElementById('orderDetailContent').innerHTML = 
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">' +
+        '<div><b>Customer:</b> ' + o.customerName + '<br><span style="color:#5a5646;font-size:0.82rem;">' + o.customerPhone + '</span></div>' +
+        '<div><b>Product:</b> ' + o.quantity + ' ' + o.unit + (o.quantity > 1 ? 's' : '') + ' of ' + o.product + '</div>' +
+        '<div><b>Total:</b> ₹' + o.total + '</div>' +
+        '<div><b>Advance Paid:</b> ₹' + o.advance + '</div>' +
+        '<div><b>Balance Due:</b> ₹' + o.balance + '</div>' +
+        '<div><b>Payment:</b> <span class="badge badge-' + o.paymentStatus + '">' + o.paymentStatus + '</span></div>' +
+        '<div><b>Delivery:</b> <span class="badge badge-' + o.deliveryStatus + '">' + o.deliveryStatus + '</span></div>' +
+        '<div><b>Worker:</b> ' + (o.workerName || 'Not assigned') + '</div>' +
+        '</div>' +
+        '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;"><button class="btn btn-secondary" onclick="showPaymentQR(\'' + o.id + '\')">🔗 Show Payment QR</button></div>' +
+          '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+          '<button class="btn btn-primary" onclick="createPaymentSession(\'' + o.id + '\')">🧪 Create Sandbox Payment</button>' +
+          '<button class="btn btn-secondary" id="openSandboxBtn-' + o.id + '" onclick="openSandboxSession(\'' + o.id + '\')">Open Sandbox</button>' +
+          '<button class="btn btn-secondary" onclick="copyPaymentLink(\'' + o.id + '\')">📋 Copy Payment Link</button>' +
+          '<button class="btn btn-sm-warn" onclick="markPartial(\'' + o.id + '\')">Mark Partial</button>' +
+          '</div>' +
+      '<div style="margin-top:14px;"><b>Delivery Address:</b><br>' +
+      (o.shopLatitude && o.shopLongitude ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + o.shopLatitude + ',' + o.shopLongitude + '" target="_blank" rel="noopener" style="color:var(--rust);font-weight:600;text-decoration:underline;">📍 Get Directions →</a><br>' : '') +
+      '<span style="color:#3f3c2f;">' + o.address + ', ' + o.area + ', ' + o.city + ' — ' + o.pincode + '</span></div>' +
+      (o.deliveryDate ? '<div style="margin-top:8px;"><b>Delivery Date:</b> ' + o.deliveryDate + '</div>' : '') +
+      (o.notes ? '<div style="margin-top:8px;"><b>Notes:</b> ' + o.notes + '</div>' : '') +
+      (o.deliveredAt ? '<div style="margin-top:8px;"><b>Delivered At:</b> ' + new Date(o.deliveredAt).toLocaleString('en-IN') + '</div>' : '') +
+      (o.deliveryPhoto ? '<div style="margin-top:12px;"><b>Delivery Photo:</b><br><img src="' + o.deliveryPhoto + '" class="photo-full" style="max-width:300px;" alt="Delivery photo"></div>' : '');
+    document.getElementById('orderModal').classList.add('open');
+  } catch (err) { alert(err.message); }
+}
+function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
+
+async function showPaymentQR(orderId) {
+  try {
+    const data = await api('/api/order/' + orderId + '/payment-link');
+    if (!data.ok) return alert('Failed to get payment link');
+    const html = '<div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">' +
+      '<div><img src="' + data.qr + '" alt="QR" style="width:180px;height:180px;border-radius:8px;border:1px solid rgba(33,29,21,0.06);"></div>' +
+      '<div style="max-width:420px;word-break:break-all;"><b>Payment Link</b><br><a href="' + data.link + '" target="_blank" rel="noopener">Open payment page</a><br><small style="color:#5a5646;">Scan this QR using any UPI/payments app or open the link.</small></div>' +
+      '</div>';
+    const container = document.getElementById('orderDetailContent');
+    container.insertAdjacentHTML('beforeend', html);
+  } catch (err) { alert(err.message); }
+}
+
+const _paymentSessionLinks = {};
+async function createPaymentSession(orderId) {
+  try {
+    const data = await api('/api/order/' + orderId + '/create-payment', { method: 'POST', body: JSON.stringify({ amount: undefined }) });
+    if (!data.ok) return alert('Failed to create session');
+    _paymentSessionLinks[orderId] = data.paymentUrl;
+    const container = document.getElementById('orderDetailContent');
+    const html = '<div style="margin-top:10px;padding:12px;border-radius:10px;background:#fff7f0;border:1px solid rgba(156,58,34,0.06);">' +
+      '<b>Sandbox Payment Created</b><br><div style="margin-top:6px;word-break:break-all;">' + data.paymentUrl + '</div>' +
+      '<div style="margin-top:8px;display:flex;gap:8px;"><button class="btn btn-primary" onclick="(function(){window.open(\'' + data.paymentUrl + '\',\'_blank\')})()">Open Sandbox</button>' +
+      '<button class="btn btn-secondary" onclick="(function(){navigator.clipboard.writeText(\'' + data.paymentUrl + '\'); alert(\'Payment link copied\');})()">Copy Link</button></div></div>';
+    container.insertAdjacentHTML('beforeend', html);
+  } catch (err) { alert(err.message); }
+}
+
+function openSandboxSession(orderId) {
+  const url = _paymentSessionLinks[orderId];
+  if (url) { window.open(url, '_blank'); return; }
+  alert('No sandbox session found for this order. Create one first.');
+}
+
+async function copyPaymentLink(orderId) {
+  try {
+    // prefer sandbox session link if created, otherwise use token-based payment link
+    if (_paymentSessionLinks[orderId]) { await navigator.clipboard.writeText(_paymentSessionLinks[orderId]); alert('Copied sandbox link'); return; }
+    const d = await api('/api/order/' + orderId + '/payment-link');
+    if (d && d.ok && d.link) { await navigator.clipboard.writeText(d.link); alert('Copied payment link'); return; }
+    alert('No payment link available');
+  } catch (err) { alert(err.message); }
+}
+
+async function markPartial(orderId) {
+  const amountStr = prompt('Enter partial amount (numeric)');
+  if (!amountStr) return;
+  const amount = Number(amountStr);
+  if (!Number.isFinite(amount) || amount <= 0) return alert('Invalid amount');
+  try {
+    // mark partial via admin API (server will compute advance/balance)
+    await api('/api/admin/order/' + orderId + '/payment', { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'partial' }) });
+    alert('Order marked partial — update totals in UI');
+    loadStats(); loadOrders();
+  } catch (err) { alert(err.message); }
+}
+
+async function markPaid(id) {
+  if (!confirm('Mark this order as fully paid?')) return;
+  try {
+    await api('/api/admin/order/' + id + '/payment', { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'paid' }) });
+    loadStats(); loadOrders();
+  } catch (err) { alert(err.message); }
+}
+
+let assignOrderId = null;
+async function openAssign(orderId) {
+  assignOrderId = orderId;
+  document.getElementById('assignOrderInfo').textContent = 'Order: ' + orderId;
+  const sel = document.getElementById('assignWorkerSelect');
+  sel.innerHTML = '<option value="">Loading workers...</option>';
+  try {
+    const data = await api('/api/admin/workers');
+    const workers = data.workers || [];
+    if (workers.length === 0) {
+      sel.innerHTML = '<option value="">No BEs available — add one first</option>';
+    } else {
+      sel.innerHTML = '<option value="">— Select worker —</option>' + 
+        workers.filter(function(w) { return w.active && w.onShift && w.availability !== 'offline'; })
+          .map(function(w) { return '<option value="' + w.id + '">' + w.name + ' — ' + w.assignedCount + ' active · ' + w.deliveredToday + ' delivered today</option>'; }).join('');
+    }
+    document.getElementById('assignModal').classList.add('open');
+  } catch (err) { alert(err.message); }
+}
+function closeAssignModal() { 
+  document.getElementById('assignModal').classList.remove('open');
+  assignOrderId = null;
+}
+async function confirmAssign() {
+  const workerId = document.getElementById('assignWorkerSelect').value;
+  if (!workerId || !assignOrderId) return;
+  try {
+    await api('/api/admin/order/' + assignOrderId + '/assign', { method: 'PATCH', body: JSON.stringify({ workerId }) });
+    closeAssignModal(); loadStats(); loadOrders();
+  } catch (err) { alert(err.message); }
+}
+
+async function viewPhoto(orderId) {
+  try {
+    const data = await api('/api/admin/order/' + orderId + '/photo');
+    document.getElementById('orderModalTitle').textContent = 'Delivery Photo — ' + orderId;
+    document.getElementById('orderDetailContent').innerHTML = 
+      '<p style="color:#5a5646;font-size:0.85rem;margin-bottom:10px;">Delivered at: ' + new Date(data.deliveredAt).toLocaleString('en-IN') + '</p>' +
+      '<img src="' + data.photo + '" class="photo-full" alt="Delivery photo">';
+    document.getElementById('orderModal').classList.add('open');
+  } catch (err) { alert(err.message); }
+}
+
+async function loadWorkers() {
+  try {
+    const data = await api('/api/admin/workers');
+    const workers = data.workers || [];
+    const list = document.getElementById('workerList');
+    if (workers.length === 0) {
+      list.innerHTML = '<div class="empty-state">No workers registered yet.</div>';
+      return;
+    }
+    list.innerHTML = workers.map(function(w) {
+      return '<div class="worker-card" style="' + (w.active ? '' : 'opacity:0.5;') + '">' +
+        '<div class="wc-name">' + w.name + '</div>' +
+        '<div class="wc-phone">' + w.phone + ' ' + (!w.active ? '(Inactive)' : '') + '</div>' +
+        '<div class="wc-stats"><span>' + (w.onShift ? '🟢 On shift · ' + w.availability : '⚪ Off shift') + '</span><span>📋 ' + w.assignedCount + ' active</span></div>' +
+        '<div class="wc-stats"><span>🏪 ' + w.shopsVisited + ' shops today</span><span>✅ ' + w.deliveredToday + ' delivered today</span></div>' +
+        '<div class="wc-stats"><span>📍 Area: ' + (w.assignedArea || 'Unassigned') + '</span></div>' +
+        (w.liveLocation ? '<div style="margin-top:8px;font-size:.78rem;"><a href="https://www.google.com/maps?q=' + w.liveLocation.latitude + ',' + w.liveLocation.longitude + '" target="_blank" rel="noopener">📍 View live location</a><br><span style="color:#5a5646;">Updated ' + new Date(w.lastLocationAt).toLocaleTimeString('en-IN') + '</span></div>' : '') +
+        '<div class="wc-actions">' +
+          (w.status === 'pending' ? '<button class="btn-sm btn-sm-success" onclick="approveWorker(\'' + w.id + '\')">Approve</button><button class="btn-sm btn-sm-danger" onclick="rejectWorker(\'' + w.id + '\')">Reject</button>' : '') +
+          '<button class="btn-sm btn-sm-secondary" onclick="showAssignArea(\'' + w.id + '\')">Assign Area</button>' +
+          '<button class="btn-sm btn-sm-secondary" onclick="showWorkerVoiceNotes(\'' + w.id + '\')">Voice Notes</button>' +
+          '<button class="btn-sm btn-sm-' + (w.active ? 'warn' : 'success') + '" onclick="toggleWorker(\'' + w.id + '\')">' + (w.active ? '❌ Deactivate' : '✅ Activate') + '</button>' +
+          '<button class="btn-sm btn-sm-secondary" onclick="deleteWorker(\'' + w.id + '\')">🗑️ Delete</button>' +
+        '</div></div>';
+    }).join('');
+  } catch (err) { alert(err.message); }
+}
+
+async function approveWorker(id) {
+  if (!confirm('Approve this BE account?')) return;
+  try { await api('/api/admin/worker/' + id + '/approve', { method: 'PATCH' }); loadWorkers(); loadStats(); } catch (err) { alert(err.message); }
+}
+
+async function rejectWorker(id) {
+  if (!confirm('Reject this BE registration?')) return;
+  try { await api('/api/admin/worker/' + id + '/reject', { method: 'PATCH' }); loadWorkers(); } catch (err) { alert(err.message); }
+}
+
+async function toggleWorker(id) {
+  try {
+    const data = await api('/api/admin/workers');
+    const worker = (data.workers || []).find(function(w) { return w.id === id; });
+    if (!worker) throw new Error('BE not found');
+    if (worker.active) {
+      await api('/api/admin/worker/' + id + '/block', { method: 'POST', body: JSON.stringify({ reason: 'Deactivated by admin' }) });
+    } else {
+      await api('/api/admin/worker/' + id + '/unblock', { method: 'POST' });
+    }
+    loadWorkers();
+  } catch (err) { alert(err.message); }
+}
+
+async function deleteWorker(id) {
+  if (!confirm('Delete this worker permanently?')) return;
+  try {
+    await api('/api/admin/worker/' + id, { method: 'DELETE' });
+    loadWorkers();
+  } catch (err) { alert(err.message); }
+}
+
+function showAddWorker() {
+  document.getElementById('workerModalTitle').textContent = 'Add New Worker';
+  document.getElementById('workerName').value = '';
+  document.getElementById('workerPhone').value = '';
+  document.getElementById('workerPass').value = '';
+  document.getElementById('workerPin').value = '';
+  document.getElementById('workerModal').classList.add('open');
+}
+function closeWorkerModal() { document.getElementById('workerModal').classList.remove('open'); }
+
+async function saveWorker() {
+  const name = document.getElementById('workerName').value.trim();
+  const phone = document.getElementById('workerPhone').value.trim();
+  const password = document.getElementById('workerPass').value;
+  const pin = document.getElementById('workerPin').value;
+  const assignedArea = document.getElementById('workerArea').value.trim();
+  if (!name || name.length < 2) { alert('Enter worker name'); return; }
+  if (!phone || !/^[6-9]\d{9}$/.test(phone)) { alert('Valid 10-digit mobile number required'); return; }
+  if (!password || password.length < 8) { alert('Password must be at least 8 characters'); return; }
+  if (!pin || pin.length < 4) { alert('Worker PIN must be at least 4 characters'); return; }
+  try {
+    await api('/api/admin/worker', { method: 'POST', body: JSON.stringify({ name, phone, password, pin, assignedArea }) });
+    closeWorkerModal(); loadWorkers(); loadStats();
+  } catch (err) { alert(err.message); }
+}
+
+let __workerAreaTarget = null;
+async function showAssignArea(id) {
+  __workerAreaTarget = id;
+  document.getElementById('workerAreaInput').value = '';
+  document.getElementById('workerAreaNote').value = '';
+  document.getElementById('workerAreaModal').classList.add('open');
+}
+function closeWorkerAreaModal() { document.getElementById('workerAreaModal').classList.remove('open'); __workerAreaTarget = null; }
+async function saveWorkerArea() {
+  if (!__workerAreaTarget) return closeWorkerAreaModal();
+  const assignedArea = document.getElementById('workerAreaInput').value.trim();
+  try {
+    await api('/api/admin/worker/' + __workerAreaTarget + '/area', { method: 'PATCH', body: JSON.stringify({ assignedArea }) });
+    closeWorkerAreaModal(); loadWorkers();
+  } catch (err) { alert(err.message); }
+}
+
+async function showWorkerVoiceNotes(id) {
+  try {
+    const data = await api('/api/admin/worker/' + id + '/voice-notes');
+    const content = document.getElementById('workerVoiceContent');
+    if (!data.notes || data.notes.length === 0) {
+      content.innerHTML = '<div class="empty-state">No voice notes found for this BE.</div>';
+    } else {
+      content.innerHTML = data.notes.map(function(note) {
+        var title = note.type === 'delivery' ? 'Delivery note' : note.type === 'order_verification' ? 'Verification note' : 'Shop note';
+        var reference = note.orderId ? 'Order: ' + note.orderId : note.shopName ? 'Shop: ' + note.shopName : '';
+        return '<div class="note-item"><div style="margin-bottom:8px;"><b>' + title + '</b> · ' + (note.at ? new Date(note.at).toLocaleString('en-IN') : '') + '</div>' +
+          '<div style="font-size:0.86rem;color:#5a5646;margin-bottom:8px;">' + reference + '</div>' +
+          '<audio controls style="width:100%;" src="' + note.voiceNote + '"></audio>' +
+        '</div>';
+      }).join('');
+    }
+    document.getElementById('workerVoiceModal').classList.add('open');
+  } catch (err) { alert(err.message); }
+}
+function closeWorkerVoiceModal() { document.getElementById('workerVoiceModal').classList.remove('open'); }
+
+async function loadCustomers() {
+  try {
+    const data = await api('/api/admin/orders');
+    const orders = data.orders || [];
+    const custMap = {};
+    orders.forEach(function(o) {
+      const key = o.customerPhone || 'unknown';
+      if (!custMap[key]) custMap[key] = { name: o.customerName || 'Unknown', phone: key, orders: [], total: 0, paid: 0 };
+      custMap[key].orders.push(o);
+      custMap[key].total += o.total || 0;
+      if (o.paymentStatus === 'paid') custMap[key].paid++;
+    });
+    const customers = Object.values(custMap);
+    const tbody = document.getElementById('customersBody');
+    if (customers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#888;">No customers yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = customers.map(function(c, i) {
+      return '<tr><td>' + (i + 1) + '</td><td><b>' + c.name + '</b></td><td>' + c.phone + '</td><td>—</td><td>' + c.orders.length + '</td><td>₹' + c.total.toLocaleString('en-IN') + '</td><td>' + c.paid + '</td></tr>';
+    }).join('');
+  } catch (err) {
+    document.getElementById('customersBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--rust);">⚠ ' + err.message + '</td></tr>';
+  }
+}
+
+async function exportOrders() {
+  try { const res = await api('/api/admin/export/orders'); const blob = await res.blob(); downloadBlob(blob, 'UrbanFarms_Orders.xlsx'); }
+  catch (err) { alert(err.message); }
+}
+async function exportWorkers() {
+  try { const res = await api('/api/admin/export/workers'); const blob = await res.blob(); downloadBlob(blob, 'UrbanFarms_Workers.xlsx'); }
+  catch (err) { alert(err.message); }
+}
+async function exportCustomers() {
+  try { const res = await api('/api/admin/export/customers'); const blob = await res.blob(); downloadBlob(blob, 'UrbanFarms_Customers.xlsx'); }
+  catch (err) { alert(err.message); }
+}
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function logout() {
+  localStorage.removeItem('uf_token'); localStorage.removeItem('uf_user');
+  window.location.href = '/login.html';
+}
+
+async function loadDeliveryOverview() {
+  try {
+    const data = await api('/api/admin/delivery-overview');
+    const summary = data.summary || {};
+    document.getElementById('deliveryActive').textContent = summary.active || 0;
+    document.getElementById('deliveryOut').textContent = summary.outForDelivery || 0;
+    document.getElementById('deliveryToday').textContent = summary.scheduledToday || 0;
+    document.getElementById('deliveryAttention').textContent = summary.attention || 0;
+    const attention = data.attention || [];
+    const active = data.active || [];
+    const attentionList = document.getElementById('deliveryAttentionList');
+    attentionList.innerHTML = attention.length ? '<h4 style="margin:0 0 2px;font-size:.9rem;">Attention required</h4>' + attention.map(function(d) {
+      const issues = [d.overdue ? 'Past scheduled delivery date' : '', d.trackingStale ? 'Driver location is not current' : '', d.reviewStatus === 'pending' ? 'Proof of delivery needs review' : ''].filter(Boolean).join(' · ');
+      return '<div class="delivery-alert"><b>' + d.id + '</b> · ' + d.customerName + ' · ' + d.product + '<br><span style="color:#5a5646;">' + issues + '</span><div style="margin-top:8px;"><button class="btn btn-small btn-secondary" onclick="viewOrder(\'' + d.id + '\')">Open delivery</button>' + (d.deliveryException && !d.deliveryException.resolved ? '<button class="btn btn-small btn-secondary" onclick="resolveException(\'' + d.id + '\')">Resolve issue</button>' : '') + '</div></div>';
+    }).join('') : '<div class="empty-state" style="padding:18px;">No delivery exceptions.</div>';
+    const activeList = document.getElementById('deliveryActiveList');
+    activeList.innerHTML = '<h4 style="margin:10px 0 2px;font-size:.9rem;">Active deliveries</h4>' + (active.length ? active.map(function(d) {
+      const live = d.liveLocation ? '<a href="https://www.google.com/maps?q=' + d.liveLocation.latitude + ',' + d.liveLocation.longitude + '" target="_blank" rel="noopener" style="color:var(--rust);font-weight:700;">View live location</a> · updated ' + new Date(d.liveLocation.updatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Location unavailable';
+      return '<div class="delivery-live"><b>' + d.id + '</b> · ' + d.deliveryStatus.replaceAll('_', ' ') + '<br><span style="color:#3f3c2f;">Customer: ' + d.customerName + ' (' + d.customerPhone + ') · Driver: ' + (d.workerName || 'Unassigned') + '</span><br><span style="color:#5a5646;">' + d.address + ', ' + d.city + ' · ' + (d.deliveryDate || 'No scheduled date') + (d.deliverySlot ? ' · ' + d.deliverySlot : '') + '</span><br><span style="font-size:.78rem;">' + live + '</span><div style="margin-top:8px;"><button class="btn btn-small btn-secondary" onclick="viewOrder(\'' + d.id + '\')">Full details</button></div></div>';
+    }).join('') : '<div class="empty-state" style="padding:18px;">No active deliveries.</div>');
+  } catch (err) {
+    document.getElementById('deliveryActiveList').innerHTML = '<div class="empty-state" style="color:var(--rust);">' + err.message + '</div>';
+  }
+}
+
+async function loadVerificationAudit() {
+  try {
+    const data = await api('/api/admin/verification-audit');
+    const rows = data.audit || [];
+    const tbody = document.getElementById('auditBody');
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#888">No verification entries yet.</td></tr>'; return; }
+    tbody.innerHTML = rows.map(function(r) {
+      return '<tr><td><b style="font-family:monospace">' + r.id + '</b></td><td>' + (r.verifiedByName || r.verifiedBy || '-') + '</td><td>' + (r.verifiedAt ? new Date(r.verifiedAt).toLocaleString('en-IN') : '-') + '</td><td style="max-width:320px;white-space:normal;">' + (r.notes || '') + '</td><td><button class="btn-sm btn-sm-secondary" onclick="viewOrder(\'' + r.id + '\')">Open</button></td></tr>';
+    }).join('');
+  } catch (e) { document.getElementById('auditBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--rust)">⚠ ' + e.message + '</td></tr>'; }
+}
+
+async function loadInventory() {
+  try {
+    const data = await api('/api/admin/inventory');
+    const list = document.getElementById('inventoryList'); const items = data.inventory || [];
+    list.innerHTML = items.map(function(item) { return '<div class="delivery-live"><b>' + item.name + '</b><br><span style="color:#5a5646;">Available stock: ' + item.stock + ' ' + item.unit + '(s)</span><div style="margin-top:8px;display:flex;gap:8px;align-items:center;"><input id="stock-' + item.key + '" type="number" min="0" value="' + item.stock + '" style="width:110px;padding:7px;border:1px solid #ddd;border-radius:7px;"><button class="btn btn-small btn-secondary" onclick="saveInventory(\'' + item.key + '\')">Update stock</button></div></div>'; }).join('') || '<div class="empty-state">No inventory products found.</div>';
+  } catch (err) { document.getElementById('inventoryList').innerHTML = '<div class="empty-state" style="color:var(--rust);">' + err.message + '</div>'; }
+}
+async function saveInventory(product) {
+  const stock = Number(document.getElementById('stock-' + product).value);
+  try { await api('/api/admin/inventory/' + product, { method: 'PATCH', body: JSON.stringify({ stock }) }); loadInventory(); }
+  catch (err) { alert(err.message); }
+}
+async function loadSupportTickets() {
+  try { const data = await api('/api/admin/support'); const tickets = data.tickets || []; document.getElementById('supportTicketList').innerHTML = tickets.length ? tickets.map(function(t) { return '<div class="delivery-alert"><b>' + t.id + '</b> · ' + t.status.replace('_', ' ') + '<br><span style="color:#3f3c2f;">' + t.customerName + ': ' + t.subject + '</span><br><span style="color:#5a5646;">' + t.message + '</span><div style="margin-top:8px;display:flex;gap:6px;"><button class="btn btn-small btn-secondary" onclick="updateSupportTicket(\'' + t.id + '\',\'in_progress\')">In progress</button><button class="btn btn-small btn-secondary" onclick="updateSupportTicket(\'' + t.id + '\',\'resolved\')">Resolve</button></div></div>'; }).join('') : '<div class="empty-state">No support tickets.</div>'; } catch (err) { document.getElementById('supportTicketList').innerHTML = '<div class="empty-state" style="color:var(--rust);">' + err.message + '</div>'; }
+}
+async function updateSupportTicket(id, status) { try { await api('/api/admin/support/' + id, { method: 'PATCH', body: JSON.stringify({ status }) }); loadSupportTickets(); } catch (err) { alert(err.message); } }
+async function resolveException(id) { try { await api('/api/admin/order/' + id + '/exception', { method: 'PATCH', body: JSON.stringify({}) }); loadDeliveryOverview(); } catch (err) { alert(err.message); } }
+async function loadDamageClaims() { try { const data = await api('/api/admin/damage-claims'); const claims = data.claims || []; document.getElementById('damageClaimList').innerHTML = claims.length ? claims.map(function(c) { const claim = c.damageClaim; return '<div class="delivery-alert"><b>' + c.id + '</b> · ' + claim.status + '<br><span style="color:#3f3c2f;">' + c.customerName + ' · ' + c.product + '</span><br><span style="color:#5a5646;">' + claim.description + '</span>' + (claim.status === 'pending' ? '<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn btn-small btn-secondary" onclick="reviewDamageClaim(\'' + c.id + '\',\'approved\')">Approve refund review</button><button class="btn btn-small btn-secondary" onclick="reviewDamageClaim(\'' + c.id + '\',\'rejected\')">Reject</button></div>' : '') + '</div>'; }).join('') : '<div class="empty-state">No damaged-product claims.</div>'; } catch (err) { document.getElementById('damageClaimList').innerHTML = '<div class="empty-state" style="color:var(--rust);">' + err.message + '</div>'; } }
+async function reviewDamageClaim(id, status) { try { await api('/api/admin/damage-claims/' + id, { method: 'PATCH', body: JSON.stringify({ status }) }); loadDamageClaims(); } catch (err) { alert(err.message); } }
+
+let currentReviewOrderId = null;
+
+async function loadPendingReviews() {
+  try {
+    const data = await api('/api/admin/reviews');
+    const list = document.getElementById('reviewsList');
+    const reviews = data.reviews || [];
+    if (reviews.length === 0) {
+      list.innerHTML = '<div class="empty-state">No pending reviews. All deliveries verified successfully.</div>';
+      return;
+    }
+    list.innerHTML = reviews.map(function(r) {
+      const faceEmoji = r.faceSimilarity >= 80 ? '✅' : r.faceSimilarity >= 50 ? '⚠️' : '❌';
+      const gpsEmoji = r.gpsDistance <= 150 ? '✅' : '❌';
+      return '<div class="delivery-card" style="background:#fff;border-radius:14px;padding:18px;border:1px solid rgba(33,29,21,0.08);box-shadow:0 4px 12px rgba(18,32,16,0.06);">' +
+        '<div class="header"><span class="id">' + r.id + '</span><span class="badge badge-pending" style="font-size:0.72rem;padding:3px 10px;border-radius:100px;font-weight:600;">Pending Review</span></div>' +
+        '<div class="details" style="font-size:0.9rem;line-height:1.6;">' +
+        '<div><span class="label" style="color:#5a5646;font-size:0.78rem;font-weight:600;text-transform:uppercase;">Customer:</span> <span class="val" style="font-weight:600;">' + r.customerName + '</span></div>' +
+        '<div style="margin-top:4px;"><span class="label" style="color:#5a5646;font-size:0.78rem;font-weight:600;text-transform:uppercase;">Product:</span> ' + r.product + ' \u2014 ' + r.quantity + ' ' + r.unit + '</div>' +
+        '<div style="margin-top:4px;"><span class="label" style="color:#5a5646;font-size:0.78rem;font-weight:600;text-transform:uppercase;">Worker:</span> ' + (r.workerName || '-') + '</div>' +
+        '<div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">' +
+          '<span style="font-size:0.85rem;background:var(--cream);padding:4px 10px;border-radius:8px;">' + faceEmoji + ' Face Match: ' + r.faceSimilarity + '%</span>' +
+          '<span style="font-size:0.85rem;background:var(--cream);padding:4px 10px;border-radius:8px;">' + gpsEmoji + ' GPS Distance: ' + r.gpsDistance + 'm</span>' +
+        '</div>' +
+        '<div style="margin-top:8px;font-size:0.82rem;color:#5a5646;">Delivered at: ' + (r.deliveredAt ? new Date(r.deliveredAt).toLocaleString('en-IN') : '-') + '</div>' +
+        '</div>' +
+        '<div class="actions" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">' +
+        '<button class="btn btn-primary btn-small" onclick="openReview(\'' + r.id + '\')" style="padding:8px 14px;font-size:0.8rem;border-radius:100px;border:none;background:var(--rust);color:#fff;font-weight:600;cursor:pointer;">🛡️ Review</button>' +
+        '</div></div>';
+    }).join('');
+  } catch (err) {
+    document.getElementById('reviewsList').innerHTML = '<div class="empty-state"><p style="color:var(--rust);">⚠ ' + err.message + '</p></div>';
+  }
+}
+
+async function openReview(orderId) {
+  currentReviewOrderId = orderId;
+  try {
+    const data = await api('/api/admin/order/' + orderId);
+    const o = data.order;
+    document.getElementById('reviewModalTitle').textContent = '🛡️ Review Delivery \u2014 ' + orderId;
+    const faceEmoji = o.faceSimilarity >= 80 ? '✅' : o.faceSimilarity >= 50 ? '⚠️' : '❌';
+    const gpsEmoji = o.gpsDistance <= 150 ? '✅' : '❌';
+    document.getElementById('reviewModalContent').innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">' +
+        '<div><b>Customer:</b> ' + o.customerName + '<br><span style="color:#5a5646;font-size:0.82rem;">' + (o.customerPhone || '') + '</span></div>' +
+        '<div><b>Worker:</b> ' + (o.workerName || 'N/A') + '</div>' +
+        '<div><b>Product:</b> ' + o.quantity + ' ' + o.unit + ' of ' + o.product + '</div>' +
+        '<div><b>Total:</b> ₹' + o.total + '</div>' +
+      '</div>' +
+      '<div style="margin-top:14px;background:var(--cream);border-radius:12px;padding:14px;border:1px solid rgba(33,29,21,0.08);">' +
+        '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">' +
+          '<span style="font-size:1.1rem;font-weight:700;">' + faceEmoji + ' Face Match: ' + o.faceSimilarity + '%' + '</span>' +
+          '<span style="font-size:1.1rem;font-weight:700;">' + gpsEmoji + ' GPS Distance: ' + o.gpsDistance + 'm' + '</span>' +
+        '</div>' +
+        '<div style="margin-top:8px;font-size:0.82rem;color:#5a5646;">Threshold: Face >= 80% & GPS <= 150m for auto-approval</div>' +
+      '</div>' +
+      (o.deliverySelfie ? '<div style="margin-top:12px;"><b>Worker Selfie (face verification):</b><br><img src="' + o.deliverySelfie + '" class="photo-full" style="max-width:200px;border-radius:12px;margin-top:6px;" alt="Worker selfie"></div>' : '') +
+      (o.deliveryPhoto ? '<div style="margin-top:12px;"><b>Delivery Photo (shop+face):</b><br><img src="' + o.deliveryPhoto + '" class="photo-full" style="max-width:200px;border-radius:12px;margin-top:6px;" alt="Delivery photo"></div>' : '') +
+      (o.deliveryLocation ? '<div style="margin-top:12px;font-size:0.85rem;"><b>Delivery GPS:</b> <a href="https://www.google.com/maps?q=' + o.deliveryLocation.latitude + ',' + o.deliveryLocation.longitude + '" target="_blank" rel="noopener">📍 View on Map</a></div>' : '') +
+      (o.shopLatitude && o.shopLongitude ? '<div style="font-size:0.85rem;"><b>Order GPS:</b> <a href="https://www.google.com/maps?q=' + o.shopLatitude + ',' + o.shopLongitude + '" target="_blank" rel="noopener">📍 View on Map</a></div>' : '') +
+      (o.deliveredAt ? '<div style="margin-top:8px;font-size:0.85rem;"><b>Delivered At:</b> ' + new Date(o.deliveredAt).toLocaleString('en-IN') + '</div>' : '') +
+      (o.workerExplanation ? '<div style="margin-top:8px;background:#fef3c7;border-radius:8px;padding:10px;font-size:0.85rem;"><b>Worker Explanation:</b><br>' + o.workerExplanation + '</div>' : '');
+    document.getElementById('reviewNotes').value = '';
+    document.getElementById('reviewModal').classList.add('open');
+  } catch (err) { alert(err.message); }
+}
+
+function closeReviewModal() {
+  document.getElementById('reviewModal').classList.remove('open');
+  currentReviewOrderId = null;
+}
+
+async function confirmReview(status) {
+  if (!currentReviewOrderId) return;
+  const notes = document.getElementById('reviewNotes').value.trim();
+  const endpoint = status === 'approved' ? 'approve' : 'reject';
+  if (status === 'rejected') {
+    if (!confirm('Reject this delivery? The order will be put back for reassignment.')) return;
+  }
+  try {
+    await api('/api/admin/review/' + currentReviewOrderId + '/' + endpoint, { method: 'POST', body: JSON.stringify({ notes: notes }) });
+    closeReviewModal(); loadPendingReviews(); loadStats(); loadOrders();
+  } catch (err) { alert(err.message); }
+}
+
+document.querySelector('.tab-bar').addEventListener('click', function(e) {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  tab.classList.add('active');
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('section-' + tab.dataset.tab).classList.add('active');
+  if (tab.dataset.tab === 'workers') loadWorkers();
+  if (tab.dataset.tab === 'shops') loadShops();
+  if (tab.dataset.tab === 'deliveries') { loadDeliveryOverview(); loadInventory(); loadSupportTickets(); loadDamageClaims(); }
+  if (tab.dataset.tab === 'verifications') loadBEVerifications();
+  if (tab.dataset.tab === 'reviews') loadPendingReviews();
+  if (tab.dataset.tab === 'audit') loadVerificationAudit();
+  if (tab.dataset.tab === 'customers') loadCustomers();
+  if (tab.dataset.tab === 'pricing') loadPrices();
+  if (tab.dataset.tab === 'inventory') loadInventoryAdmin();
+  if (tab.dataset.tab === 'payment-gateway') loadPaymentConfig();
+  if (tab.dataset.tab === 'system-audit') loadSystemAudit();
+});
+
+loadStats();
+loadOrders();
+setInterval(function() { if (document.getElementById('section-deliveries').classList.contains('active')) loadDeliveryOverview(); }, 30000);
+
+// Shops pagination state
+let shopsPage = 1; const SHOPS_PER_PAGE = 12;
+function changeShopsPage(delta) { shopsPage = Math.max(1, shopsPage + delta); loadShops(shopsPage); }
+
+async function loadShops(page = 1) {
+  shopsPage = Math.max(1, Number(page) || 1);
+  try {
+    const data = await api('/api/admin/shops');
+    let shops = data.shops || [];
+    const q = (document.getElementById('shopSearch')?.value || '').trim().toLowerCase();
+    if (q) shops = shops.filter(s => (s.id || '').toLowerCase().includes(q) || (s.shopName || '').toLowerCase().includes(q) || (s.ownerName || '').toLowerCase().includes(q) || (s.ownerPhone || '').includes(q) || (s.area || '').toLowerCase().includes(q));
+    const total = shops.length; const pages = Math.max(1, Math.ceil(total / SHOPS_PER_PAGE));
+    if (shopsPage > pages) shopsPage = pages;
+    const start = (shopsPage - 1) * SHOPS_PER_PAGE; const end = start + SHOPS_PER_PAGE;
+    const pageItems = shops.slice(start, end);
+    const tbody = document.getElementById('shopsBody');
+    if (!pageItems.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#888;">No shops found.</td></tr>'; }
+    else {
+      tbody.innerHTML = pageItems.map(s => '<tr>' +
+        '<td><b style="font-family:monospace;">' + s.id + '</b></td>' +
+        '<td>' + (s.shopName || '-') + '</td>' +
+        '<td>' + (s.ownerName || '-') + '</td>' +
+        '<td>' + (s.ownerPhone || '-') + '</td>' +
+        '<td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (s.address || '-') + '</td>' +
+        '<td>' + (s.registeredByName || '-') + '</td>' +
+        '<td>' + (s.visits || 0) + '</td>' +
+        '<td>' + (s.status || '-') + '</td>' +
+        '<td><div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+          '<button class="btn-sm btn-sm-secondary" onclick="viewShop(\'' + s.id + '\')">View</button>' +
+          '<button class="btn-sm btn-sm-primary" onclick="navigateToShop(\'' + s.id + '\')">📍 Navigate</button>' +
+          '<button class="btn-sm btn-sm-warn" onclick="resetShopCredentials(\'' + s.id + '\')">Reset Creds</button>' +
+          '<button class="btn-sm btn-sm-primary" onclick="loadShopOrders(\'' + s.id + '\')">Orders</button>' +
+        '</div></td></tr>').join('');
+    }
+    document.getElementById('shopsPager').textContent = 'Page ' + shopsPage + ' / ' + pages + ' (' + total + ')';
+    document.getElementById('shopsPrev').disabled = shopsPage <= 1; document.getElementById('shopsNext').disabled = shopsPage >= pages;
+  } catch (err) { document.getElementById('shopsBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--rust);">⚠ ' + err.message + '</td></tr>'; }
+}
+
+async function navigateToShop(id) {
+  try {
+    const data = await api('/api/admin/shop/' + id);
+    const s = data.shop || {};
+    const destination = (s.latitude != null && s.longitude != null) ? (s.latitude + ',' + s.longitude) : [s.address, s.area, s.city, s.pincode].filter(Boolean).join(', ');
+    if (!destination) return alert('This shop has no saved location or address.');
+    window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(destination), '_blank', 'noopener');
+  } catch (err) { alert(err.message); }
+}
+
+// System Audit: load recent audit entries
+async function loadSystemAudit() {
+  try {
+    const data = await api('/api/admin/audit-log?limit=200');
+    const entries = data.entries || [];
+    const tbody = document.getElementById('systemAuditBody');
+    if (!tbody) return;
+    if (!entries.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#888;">No audit entries found.</td></tr>'; return; }
+    tbody.innerHTML = entries.map(e => '<tr><td>' + (e.id || '-') + '</td><td>' + (e.actorId || '-') + '</td><td>' + (e.action || '-') + '</td><td style="white-space:nowrap;">' + new Date(e.at).toLocaleString('en-IN') + '</td></tr>').join('');
+  } catch (err) { const tbody = document.getElementById('systemAuditBody'); if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--rust);">⚠ ' + err.message + '</td></tr>'; }
+}
+</script>
+<!-- Google Translate Element (hidden) -->
+<div id="google_translate_element" style="display:none;position:absolute;top:-9999px;left:-9999px;"></div>
+<style>
+.goog-te-banner-frame.skiptranslate,.goog-te-gadget-simple,.goog-te-menu-frame,.goog-te-menu-value,.goog-te-combo{display:none!important;}
+.goog-te-gadget{color:transparent!important;font-size:0!important;}
+body{top:0!important;}
+.skiptranslate{display:none!important;height:0!important;}
+</style>
+<script src="../assets/translator-enhanced.js"></script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
+

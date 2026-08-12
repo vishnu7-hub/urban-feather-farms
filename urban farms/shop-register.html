@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Register Shop — Urban Feather Farms</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(135deg,#f7f1df,#eef5e9);color:#211D15;margin:0;padding:18px}
+    .container{max-width:980px;margin:18px auto;background:#fff;border-radius:22px;padding:28px;border:1px solid rgba(33,29,21,0.08);box-shadow:0 18px 50px rgba(43,61,36,.12)}
+    h1{font-size:clamp(1.35rem,3vw,2rem);margin-bottom:4px;color:#122010}
+    .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,340px);gap:24px}
+    .form-group{margin-bottom:10px}
+    label{display:block;font-weight:700;font-size:0.9rem;margin-bottom:6px}
+    input,textarea,select{width:100%;padding:12px 13px;border-radius:11px;border:1px solid rgba(33,29,21,0.14);background:#FBF8EF;font:inherit;transition:.2s}
+    input:focus,textarea:focus,select:focus{outline:3px solid rgba(156,58,34,.14);border-color:#9C3A22}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:9px;border:none;cursor:pointer}
+    .btn-primary{background:#9C3A22;color:#fff}
+    .btn-secondary{background:#fff;border:1px solid #9C3A22;color:#9C3A22}
+    .camera-box{background:#182018;border-radius:14px;min-height:190px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:3px solid #dce8d5}
+    video{width:100%;height:100%;object-fit:cover}
+    img.preview{width:100%;display:block}
+    .note{font-size:0.85rem;color:#5a5646}
+    .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .error{color:#9C3A22;margin-bottom:8px;display:none}
+    .section-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:#6b765d;font-weight:800;margin:20px 0 10px}
+    @media(max-width:720px){body{padding:8px}.container{padding:18px;border-radius:16px}.grid{grid-template-columns:1fr}.top-bar{align-items:flex-start}.camera-box{min-height:220px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div><h1>Register your shop</h1><div class="note">Urban Feather Farms · quick shop onboarding</div></div>
+      <div>
+        <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+      </div>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div class="grid">
+      <div>
+        <div class="form-group"><label>Shop Name</label><input id="shopName" placeholder="Example: Ramesh Provision Stores"></div>
+        <div class="form-group"><label>Owner Name</label><input id="ownerName" placeholder="Owner full name"></div>
+        <div class="form-group"><label>Owner Phone</label><input id="ownerPhone" maxlength="10" placeholder="10-digit mobile" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+        <div class="form-group"><label>Address</label><textarea id="shopAddress" rows="3" placeholder="Full shop address"></textarea></div>
+        <div style="display:flex;gap:8px"><div style="flex:1" class="form-group"><label>Area</label><input id="shopArea" placeholder="Locality/Area"></div><div style="width:120px" class="form-group"><label>Pincode</label><input id="shopPincode" maxlength="6" placeholder="Pincode" oninput="this.value=this.value.replace(/\D/g,'')"></div></div>
+        <div style="margin-top:12px;">
+          <label>Voice Note (owner confirms they accept to take orders)</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+            <span style="font-size:0.85rem;color:#5a5646;">Use the 🎙️ Voice Note button at the bottom-right corner of the screen.</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+          <input type="checkbox" id="regOwnerConsent" style="width:auto;">
+          <label for="regOwnerConsent" style="margin:0;font-size:0.86rem;">The shop owner accepts to take orders from Urban Farms.</label>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="captureAll()">📸 Capture & Submit</button>
+          <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+          <div style="margin-left:auto" class="note">Location will be captured automatically.</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="margin-bottom:10px"><label>Shop Photo</label>
+          <div class="camera-box" id="shopBox">
+            <video id="shopVideo" autoplay playsinline style="display:none"></video>
+            <img id="shopPreview" class="preview" style="display:none" alt="Shop preview">
+            <div id="shopPlaceholder" style="color:#8a856c;padding:12px">Open camera to capture shop photo</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-secondary" onclick="openShopCam()" id="openShopCamBtn">Open Camera</button><button class="btn btn-primary" onclick="captureShopFrame()" id="captureShopBtn" style="display:none">Capture Photo</button><button class="btn btn-secondary" id="retakeShop" style="display:none" onclick="retakeShop()">Retake</button></div>
+        </div>
+
+        <div style="margin-top:12px"><label>Owner Photo</label>
+          <div class="camera-box" id="ownerBox">
+            <video id="ownerVideo" autoplay playsinline style="display:none"></video>
+            <img id="ownerPreview" class="preview" style="display:none" alt="Owner preview">
+            <div id="ownerPlaceholder" style="color:#8a856c;padding:12px">Open camera to capture owner photo</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-secondary" onclick="openOwnerCam()" id="openOwnerCamBtn">Open Camera</button><button class="btn btn-primary" onclick="captureOwnerFrame()" id="captureOwnerBtn" style="display:none">Capture Photo</button><button class="btn btn-secondary" id="retakeOwner" style="display:none" onclick="retakeOwner()">Retake</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+const API = window.location.origin;
+let shopStream = null; let ownerStream = null; let shopImg = null; let ownerImg = null;
+
+    function goBack(){ window.location.href = '/worker-dashboard.html'; }
+
+    function showError(msg){ const el=document.getElementById('error'); el.textContent=msg; el.style.display='block'; }
+    function clearError(){ const el=document.getElementById('error'); el.textContent=''; el.style.display='none'; }
+
+    function openShopCam(){ clearError(); const v=document.getElementById('shopVideo'); document.getElementById('shopPlaceholder').style.display='none'; v.style.display='block'; navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'} }).then(s=>{ shopStream=s; v.srcObject=s; document.getElementById('openShopCamBtn').style.display='none'; document.getElementById('captureShopBtn').style.display='inline-flex'; document.getElementById('retakeShop').style.display='none'; }).catch(e=>showError('Camera access required for shop photo')); }
+    function openOwnerCam(){ clearError(); const v=document.getElementById('ownerVideo'); document.getElementById('ownerPlaceholder').style.display='none'; v.style.display='block'; navigator.mediaDevices.getUserMedia({video:{facingMode:'user'} }).then(s=>{ ownerStream=s; v.srcObject=s; document.getElementById('openOwnerCamBtn').style.display='none'; document.getElementById('captureOwnerBtn').style.display='inline-flex'; document.getElementById('retakeOwner').style.display='none'; }).catch(e=>showError('Camera access required for owner photo')); }
+
+    function captureShopFrame(){ const v=document.getElementById('shopVideo'); if(!shopStream||!v.videoWidth){ showError('Camera is still starting. Please try again.'); return; } const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0); shopImg = c.toDataURL('image/jpeg',0.8); stopShopCam(); document.getElementById('shopVideo').style.display='none'; document.getElementById('captureShopBtn').style.display='none'; document.getElementById('shopPreview').src=shopImg; document.getElementById('shopPreview').style.display='block'; document.getElementById('retakeShop').style.display='inline-flex'; }
+    function captureOwnerFrame(){ const v=document.getElementById('ownerVideo'); if(!ownerStream||!v.videoWidth){ showError('Camera is still starting. Please try again.'); return; } const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0); ownerImg = c.toDataURL('image/jpeg',0.8); stopOwnerCam(); document.getElementById('ownerVideo').style.display='none'; document.getElementById('captureOwnerBtn').style.display='none'; document.getElementById('ownerPreview').src=ownerImg; document.getElementById('ownerPreview').style.display='block'; document.getElementById('retakeOwner').style.display='inline-flex'; }
+
+    function stopShopCam(){ if(shopStream){ shopStream.getTracks().forEach(t=>t.stop()); shopStream=null; } }
+    function stopOwnerCam(){ if(ownerStream){ ownerStream.getTracks().forEach(t=>t.stop()); ownerStream=null; } }
+    function retakeShop(){ shopImg=null; document.getElementById('shopPreview').style.display='none'; document.getElementById('shopPlaceholder').style.display='block'; document.getElementById('retakeShop').style.display='none'; document.getElementById('openShopCamBtn').style.display='inline-flex'; }
+    function retakeOwner(){ ownerImg=null; document.getElementById('ownerPreview').style.display='none'; document.getElementById('ownerPlaceholder').style.display='block'; document.getElementById('retakeOwner').style.display='none'; document.getElementById('openOwnerCamBtn').style.display='inline-flex'; }
+
+    // captureAll will ensure images exist; if stream running capture frame then submit
+    async function captureAll(){ clearError(); if(!shopImg){ if(!shopStream){ openShopCam(); await new Promise(r=>setTimeout(r,800)); } if(shopStream){ captureShopFrame(); } else { showError('Cannot capture shop photo'); return; } }
+      if(!ownerImg){ if(!ownerStream){ openOwnerCam(); await new Promise(r=>setTimeout(r,800)); } if(ownerStream){ captureOwnerFrame(); } else { showError('Cannot capture owner photo'); return; } }
+      await submit(); }
+
+    async function submit(){ clearError(); const shopName=document.getElementById('shopName').value.trim(); const ownerName=document.getElementById('ownerName').value.trim(); const ownerPhone=document.getElementById('ownerPhone').value.trim(); const address=document.getElementById('shopAddress').value.trim(); const area=document.getElementById('shopArea').value.trim(); const pincode=document.getElementById('shopPincode').value.trim();
+      if(!shopName||shopName.length<3){ showError('Enter a shop name'); return; }
+      if(!ownerName||ownerName.length<3){ showError('Enter owner name'); return; }
+      if(!/^[6-9]\d{9}$/.test(ownerPhone)){ showError('Enter valid 10-digit owner phone'); return; }
+      if(!address||address.length<8){ showError('Enter full address'); return; }
+      if(!/^[0-9]{6}$/.test(pincode)){ showError('Enter 6-digit pincode'); return; }
+if(!shopImg || !ownerImg){ showError('Capture both shop and owner photos'); return; }
+const consent = document.getElementById('regOwnerConsent').checked;
+      if(!consent){ showError('The shop owner must accept to take orders from Urban Farms.'); return; }
+      if(!window.UFVoice || !window.UFVoice.hasBlob()){ showError('Record a voice note confirming the owner accepts to take orders.'); return; }
+try{ const loc = await getLocation(); const voiceNote = await window.UFVoice.getDataUrl(); const body = { shopName, ownerName, ownerPhone, address, area, pincode, city:'Hyderabad', state:'Telangana', shopPhoto: shopImg, ownerPhoto: ownerImg, latitude: loc.latitude, longitude: loc.longitude, ownerConsent: true, voiceNote };
+        const token = localStorage.getItem('uf_token'); if(!token){ showError('Not authenticated as BE. Login at the BE dashboard first.'); return; }
+        const authHeaders = { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token };
+        // Report the worker's live location so the server's fresh-location check passes (2 min window).
+        try { await fetch(API + '/api/worker/location', { method:'POST', headers: authHeaders, body: JSON.stringify({ location: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy } }) }); }
+        catch (locErr) { /* non-fatal; fall through */ }
+        const res = await fetch(API + '/api/worker/shop/register', { method:'POST', headers: authHeaders, body: JSON.stringify(body) }); const data = await res.json(); if(!res.ok) throw new Error(data.error || 'Registration failed');
+        alert('Shop registered: ' + (data.shop?.shopName || 'OK') + '\nCredentials: ' + (data.credentials ? JSON.stringify(data.credentials) : '—'));
+        resetForm();
+      }catch(e){ showError(e.message || String(e)); }
+    }
+
+function resetForm(){ document.getElementById('shopName').value=''; document.getElementById('ownerName').value=''; document.getElementById('ownerPhone').value=''; document.getElementById('shopAddress').value=''; document.getElementById('shopArea').value=''; document.getElementById('shopPincode').value=''; document.getElementById('regOwnerConsent').checked=false; if(window.UFVoice) window.UFVoice.clear(); retakeShop(); retakeOwner(); clearError(); }
+
+    function getLocation(){ return new Promise((resolve,reject)=>{ if(!navigator.geolocation) return reject(new Error('Location not supported')); navigator.geolocation.getCurrentPosition(p=>resolve({ latitude:p.coords.latitude, longitude:p.coords.longitude, accuracy:p.coords.accuracy }), err=>reject(new Error('Enable location access')), { enableHighAccuracy:true, timeout:15000, maximumAge:30000 }); }); }
+
+// convenience: capture frames if user presses space while camera open
+    document.addEventListener('keydown', function(e){ if(e.code==='Space'){ if(shopStream) captureShopFrame(); if(ownerStream) captureOwnerFrame(); } });
+  </script>
+<script src="../assets/voice-recorder.js"></script>
+</body>
+</html>

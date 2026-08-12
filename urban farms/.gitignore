@@ -1,0 +1,5 @@
+.env
+payload.json
+node_modules/
+data/*.json
+npm-debug.log*

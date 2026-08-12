@@ -1,0 +1,6 @@
+urban farms/.env
+urban farms/data/*.json
+urban farms/node_modules/
+node_modules/
+*.log
+.DS_Store

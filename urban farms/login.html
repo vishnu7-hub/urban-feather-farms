@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urban Farms — Login</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--forest:#1E3420;--forest-deep:#122010;--gold:#C79A3E;--gold-light:#E7C878;--rust:#9C3A22;--cream:#F7F1E1;--cream-soft:#FBF8EF;}
+body{font-family:system-ui,-apple-system,sans-serif;background:radial-gradient(circle at top left,#fff 0,var(--cream-soft) 42%,#ebe4d2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.auth-container{max-width:460px;width:100%;}
+.brand{text-align:center;margin-bottom:30px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.brand img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);}
+.brand h1{font-size:1.5rem;color:var(--forest-deep);font-weight:700;}
+.brand p{font-size:0.85rem;color:#5a5646;}
+.tab-bar{display:flex;background:var(--cream);border-radius:14px;padding:4px;margin-bottom:28px;border:1px solid rgba(33,29,21,0.1);}
+.tab{flex:1;padding:10px 8px;text-align:center;border-radius:11px;border:none;background:transparent;cursor:pointer;font-weight:600;font-size:0.85rem;color:#5a5646;transition:all .2s;}
+.tab.active{background:var(--forest);color:#fff;box-shadow:0 4px 12px rgba(30,52,32,0.3);}
+.card{background:rgba(255,255,255,.96);border-radius:22px;padding:32px;box-shadow:0 20px 50px -20px rgba(18,32,16,0.25);border:1px solid rgba(33,29,21,0.08);}
+.card h2{font-size:1.2rem;color:var(--forest-deep);margin-bottom:6px;}
+.card .sub{color:#5a5646;font-size:0.88rem;margin-bottom:22px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:0.82rem;font-weight:600;color:var(--forest-deep);margin-bottom:7px;}
+.form-group input{width:100%;padding:12px 14px;border-radius:11px;border:1.5px solid rgba(33,29,21,0.14);font-size:0.95rem;background:var(--cream-soft);transition:border-color .2s;}
+.form-group input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(199,154,62,0.15);}
+.btn{width:100%;padding:13px;border-radius:999px;border:none;font-weight:700;font-size:0.95rem;cursor:pointer;transition:background .2s, transform .2s;margin-top:4px;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{background:#C1552E;transform:translateY(-1px);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-secondary{background:transparent;color:var(--forest);border:1.5px solid var(--forest);margin-top:8px;}
+.btn-secondary:hover{background:var(--forest);color:#fff;}
+.error-msg{background:#fef2f2;color:var(--rust);font-size:0.84rem;padding:10px 14px;border-radius:10px;margin-bottom:16px;display:none;}
+.error-msg.show{display:block;}
+.success-msg{background:#f0fdf4;color:#166534;font-size:0.84rem;padding:10px 14px;border-radius:10px;margin-bottom:16px;display:none;}
+.success-msg.show{display:block;}
+.form-hint{font-size:0.8rem;color:#8a856c;margin-top:6px;}
+.divider{text-align:center;color:#8a856c;font-size:0.82rem;padding:12px 0;position:relative;}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:rgba(33,29,21,0.1);}
+.divider::before{left:0;}
+.divider::after{right:0;}
+.worker-pin-hint{background:var(--cream);border-radius:10px;padding:10px 14px;font-size:0.8rem;color:var(--forest-deep);margin:12px 0;border:1px solid rgba(199,154,62,0.2);}
+.lang-switcher{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:14px;}
+.lang-btn{padding:8px 12px;border-radius:999px;border:1px solid rgba(33,29,21,0.12);background:var(--cream-soft);color:var(--forest-deep);font-size:0.82rem;font-weight:700;transition:all .2s ease;cursor:pointer;}
+.goog-te-banner-frame.skiptranslate,.goog-te-gadget-simple,.goog-te-menu-frame,.goog-te-menu-value{display:none!important;}
+.goog-te-gadget{color:transparent!important;font-size:0!important;}
+body{top:0!important;}
+.skiptranslate{display:none!important;height:0!important;}
+.extra-link{display:block;text-align:center;font-size:0.85rem;color:#8a856c;margin-top:14px;text-decoration:none;}
+.extra-link:hover{color:var(--forest);}
+@media(max-width:520px){body{padding:14px;align-items:flex-start;}.auth-container>div:first-child{align-items:flex-start!important;}.brand img{width:52px;height:52px;}.brand h1{font-size:1.25rem;}.card{padding:24px 20px;}.tab{font-size:.78rem;padding:10px 4px;}}
+</style>
+</head>
+<body>
+<div class="auth-container">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div class="brand" style="margin-bottom:0;">
+      <img src="logo.jpeg" alt="Urban Farms">
+      <h1>Urban Farms</h1>
+      <p>Natu Kodi Supply — Hyderabad</p>
+    </div>
+    <div>
+      <div class="translator-wrapper" style="position:relative;display:inline-flex;align-items:center;">
+        <button class="translator-toggle" id="translatorToggle" aria-expanded="false" style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(33,29,21,0.12);background:var(--cream-soft);color:var(--forest-deep);font-size:0.82rem;font-weight:700;cursor:pointer;transition:all .2s ease;">
+          <span></span> <span class="translator-label">EN</span>
+        </button>
+        <div class="translator-menu" id="translatorMenu" style="position:absolute;top:calc(100% + 10px);right:0;display:none;flex-direction:column;gap:8px;padding:10px;background:rgba(18,32,16,0.96);border:1px solid rgba(255,255,255,0.12);border-radius:18px;min-width:160px;z-index:1000;">
+          <button class="lang-btn active" data-lang="en" style="width:100%;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;text-align:left;cursor:pointer;font-size:0.85rem;"> English</button>
+          <button class="lang-btn" data-lang="te" style="width:100%;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;text-align:left;cursor:pointer;font-size:0.85rem;"> తెలుగు</button>
+          <button class="lang-btn" data-lang="hi" style="width:100%;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;text-align:left;cursor:pointer;font-size:0.85rem;"> हिंदी</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="tabBar">
+    <button class="tab active" data-tab="customer">Customer</button>
+    <button class="tab" data-tab="worker">Business Exec (BE)</button>
+    <button class="tab" data-tab="admin">Admin</button>
+  </div>
+
+  <!-- CUSTOMER PANEL -->
+  <div class="card" id="panel-customer">
+    <h2>Shop Owner Login</h2>
+    <p class="sub">Login with the phone number and password provided by your BE.</p>
+    <div class="error-msg" id="custError"></div>
+    <div class="success-msg" id="custSuccess"></div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="tel" id="custPhone" placeholder="10-digit mobile number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="custPassword" placeholder="Enter your password">
+    </div>
+    <button class="btn btn-primary" id="custLoginBtn" onclick="customerLogin()">Login</button>
+    <div class="note" style="margin-top:12px;font-size:0.9rem;color:#5a5646;">Accounts are created by BE staff after visiting your shop. If you do not have credentials, please contact your BE.</div>
+    <a href="/" class="extra-link" style="margin-top:12px;display:inline-block;">Back to Home</a>
+  </div>
+
+  <!-- WORKER PANEL -->
+  <div class="card" id="panel-worker" style="display:none;">
+    <h2>BE Login</h2>
+    <p class="sub">Sign in with the credentials you set at registration</p>
+    <div class="worker-pin-hint">Your password and PIN keep your BE account secure.</div>
+    <div class="error-msg" id="workerError"></div>
+    <div class="success-msg" id="workerSuccess"></div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="tel" id="workerPhone" placeholder="10-digit mobile number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="workerPassword" placeholder="Enter your password">
+    </div>
+    <div class="form-group">
+      <label>BE PIN</label>
+      <input type="password" id="workerPin" placeholder="Enter your PIN" inputmode="numeric">
+    </div>
+    <button class="btn btn-primary" onclick="workerLogin()">BE Login</button>
+    <div class="divider">or</div>
+    <button class="btn btn-secondary" onclick="showWorkerRegister()">Register as BE</button>
+    <a href="/" class="extra-link"> Back to Home</a>
+  </div>
+
+  <!-- WORKER REGISTER -->
+  <div class="card" id="panel-worker-reg" style="display:none;">
+    <h2>Register as BE</h2>
+    <p class="sub">Take a clear selfie and create your credentials. Each face can have only one account; an admin must approve the account before login. The selfie is used for verification during shop visits.</p>
+    <div class="error-msg" id="workerRegError"></div>
+    <div class="success-msg" id="workerRegSuccess"></div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="workerRegName" placeholder="Your full name">
+    </div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="tel" id="workerRegPhone" placeholder="10-digit mobile number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label>Create Password</label>
+      <input type="password" id="workerRegPassword" placeholder="At least 8 characters" minlength="8">
+    </div>
+    <div class="form-group">
+      <label>Create 4 to 6 Digit PIN</label>
+      <input type="password" id="workerRegPin" placeholder="Numbers only" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label> Enrollment Selfie (for face verification at delivery)</label>
+      <div id="enrollmentCameraArea" style="position:relative;background:#000;border-radius:11px;overflow:hidden;min-height:200px;display:flex;align-items:center;justify-content:center;">
+        <video id="enrollmentVideo" autoplay playsinline style="width:100%;display:none;"></video>
+        <img id="enrollmentPreview" style="width:100%;display:none;border-radius:11px;" alt="Preview">
+        <div id="enrollmentPlaceholder" style="color:#8a856c;font-size:0.85rem;text-align:center;padding:20px;">
+          <div style="font-size:2rem;margin-bottom:8px;"></div>
+          <p>Click "Open Camera" to take a selfie</p>
+        </div>
+      </div>
+    </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-secondary" id="openEnrollmentCamBtn" onclick="openEnrollmentCamera()" style="flex:1;"> Open Camera</button>
+          <button class="btn btn-secondary" id="retakeEnrollmentBtn" onclick="retakeEnrollment()" style="flex:1;display:none;"> Retake</button>
+        </div>
+      <button class="btn btn-primary" onclick="workerRegister()">Register BE</button>
+    <button class="btn btn-secondary" onclick="showWorkerLogin()">Back to Login</button>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="card" id="panel-admin" style="display:none;">
+    <h2>Admin Login</h2>
+    <p class="sub">Farm owner / admin access</p>
+    <div class="worker-pin-hint"> Use the admin credentials configured for this site.</div>
+    <div class="error-msg" id="adminError"></div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="tel" id="adminPhone" placeholder="10-digit mobile number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPass" placeholder="Enter admin password">
+    </div>
+    <button class="btn btn-primary" onclick="adminLogin()">Login</button>
+    <a href="/" class="extra-link"> Back to Home</a>
+  </div>
+</div>
+
+<script src="../assets/translator-enhanced.js"></script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script>
+const API = window.location.origin;
+
+document.getElementById('tabBar').addEventListener('click', function(e) {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  tab.classList.add('active');
+  const role = tab.dataset.tab;
+  document.querySelectorAll('.card').forEach(function(c) { c.style.display = 'none'; });
+  if (role === 'customer') {
+    document.getElementById('panel-customer').style.display = 'block';
+  } else if (role === 'worker') {
+    document.getElementById('panel-worker').style.display = 'block';
+  } else if (role === 'admin') {
+    document.getElementById('panel-admin').style.display = 'block';
+  }
+  hideAllErrors();
+});
+
+const requestedRole = new URLSearchParams(window.location.search).get('role');
+if (['customer', 'worker', 'admin'].includes(requestedRole)) {
+  document.querySelector('.tab[data-tab="' + requestedRole + '"]').click();
+}
+
+function hideAllErrors() {
+  document.querySelectorAll('.error-msg, .success-msg').forEach(function(el) { el.classList.remove('show'); el.textContent = ''; });
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function showSuccess(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function storeSession(token, user) {
+  localStorage.setItem('uf_token', token);
+  localStorage.setItem('uf_user', JSON.stringify(user));
+}
+
+async function customerLogin() {
+  hideAllErrors();
+  const phone = document.getElementById('custPhone').value.trim();
+  const password = document.getElementById('custPassword').value;
+  if (!phone || !/^[6-9]\d{9}$/.test(phone)) { showError('custError', 'Enter a valid 10-digit mobile number.'); return; }
+  if (!password || password.length < 4) { showError('custError', 'Enter your password.'); return; }
+  try {
+    const res = await fetch(API + '/api/auth/customer/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError('custError', data.error); return; }
+    storeSession(data.token, data.user);
+    window.location.href = '/customer-dashboard.html';
+  } catch (err) { showError('custError', 'Connection error. Please try again.'); }
+}
+
+async function sendWorkerOtp() {
+  hideAllErrors();
+  const phone = document.getElementById('workerPhone').value.trim();
+  if (!phone || !/^[6-9]\d{9}$/.test(phone)) { showError('workerError', 'Enter a valid 10-digit mobile number.'); return; }
+  try {
+    const res = await fetch(API + '/api/auth/worker/send-otp', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError('workerError', data.error); return; }
+    showSuccess('workerSuccess', data.message);
+  } catch (err) { showError('workerError', 'Connection error. Please try again.'); }
+}
+
+async function workerLogin() {
+  hideAllErrors();
+  const phone = document.getElementById('workerPhone').value.trim();
+  const password = document.getElementById('workerPassword').value;
+  const pin = document.getElementById('workerPin').value.trim();
+  if (!phone || !/^[6-9]\d{9}$/.test(phone)) { showError('workerError', 'Enter a valid 10-digit mobile number.'); return; }
+  if (!password || !pin) { showError('workerError', 'Enter your password and PIN.'); return; }
+  try {
+    const body = { phone, password, pin };
+    const res = await fetch(API + '/api/auth/worker/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { showError('workerError', data.error); return; }
+    storeSession(data.token, data.user);
+    if (data.user && data.user.role === 'admin') window.location.href = '/admin-dashboard.html';
+    else window.location.href = '/worker-dashboard.html';
+  } catch (err) { showError('workerError', 'Connection error. Please try again.'); }
+}
+
+function showWorkerRegister() {
+  document.getElementById('panel-worker').style.display = 'none';
+  document.getElementById('panel-worker-reg').style.display = 'block';
+  hideAllErrors();
+}
+
+function showWorkerLogin() {
+  document.getElementById('panel-worker-reg').style.display = 'none';
+  document.getElementById('panel-worker').style.display = 'block';
+  hideAllErrors();
+}
+
+async function workerRegister() {
+  hideAllErrors();
+  const name = document.getElementById('workerRegName').value.trim();
+  const phone = document.getElementById('workerRegPhone').value.trim();
+  const password = document.getElementById('workerRegPassword').value;
+  const pin = document.getElementById('workerRegPin').value.trim();
+  if (!name || name.length < 2) { showError('workerRegError', 'Please enter your full name.'); return; }
+  if (!phone || !/^[6-9]\d{9}$/.test(phone)) { showError('workerRegError', 'Enter a valid 10-digit mobile number.'); return; }
+  if (!password || password.length < 8) { showError('workerRegError', 'Choose a password with at least 8 characters.'); return; }
+  if (!/^\d{4,6}$/.test(pin)) { showError('workerRegError', 'Choose a 4 to 6 digit PIN.'); return; }
+  if (!enrollmentPhotoData) { showError('workerRegError', 'Take a clear selfie before registering.'); return; }
+  try {
+    const body = { name, phone, password, pin, selfie: enrollmentPhotoData };
+    const res = await fetch(API + '/api/auth/worker/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { showError('workerRegError', data.error); return; }
+    showSuccess('workerRegSuccess', data.message);
+  } catch (err) { showError('workerRegError', 'Connection error. Please try again.'); }
+}
+
+async function adminLogin() {
+  hideAllErrors();
+  const phone = document.getElementById('adminPhone').value.trim();
+  const password = document.getElementById('adminPass').value;
+  if (!phone || !/^[6-9]\d{9}$/.test(phone)) { showError('adminError', 'Enter a valid 10-digit mobile number.'); return; }
+  if (!password) { showError('adminError', 'Enter admin password.'); return; }
+  try {
+    const res = await fetch(API + '/api/auth/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError('adminError', data.error); return; }
+    storeSession(data.token, data.user);
+    window.location.href = '/admin-dashboard.html';
+  } catch (err) {
+    showError('adminError', 'Connection error. Please try again.');
+  }
+}
+
+let enrollmentStream = null;
+let enrollmentPhotoData = null;
+
+async function openEnrollmentCamera() {
+  try {
+    document.getElementById('enrollmentPlaceholder').style.display = 'none';
+    document.getElementById('enrollmentVideo').style.display = 'block';
+    enrollmentStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false
+    });
+    document.getElementById('enrollmentVideo').srcObject = enrollmentStream;
+    document.getElementById('openEnrollmentCamBtn').textContent = ' Capture Selfie';
+    document.getElementById('openEnrollmentCamBtn').onclick = captureEnrollment;
+  } catch (err) {
+    showError('workerRegError', 'Camera access is required for enrollment. Please allow camera permissions.');
+  }
+}
+
+function captureEnrollment() {
+  const video = document.getElementById('enrollmentVideo');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  enrollmentPhotoData = canvas.toDataURL('image/jpeg', 0.8);
+  
+  if (enrollmentStream) {
+    enrollmentStream.getTracks().forEach(function(t) { t.stop(); });
+    enrollmentStream = null;
+  }
+  
+  document.getElementById('enrollmentVideo').style.display = 'none';
+  document.getElementById('enrollmentPreview').src = enrollmentPhotoData;
+  document.getElementById('enrollmentPreview').style.display = 'block';
+  document.getElementById('openEnrollmentCamBtn').textContent = ' Selfie Captured';
+  document.getElementById('openEnrollmentCamBtn').disabled = true;
+  document.getElementById('retakeEnrollmentBtn').style.display = 'block';
+}
+
+function retakeEnrollment() {
+  enrollmentPhotoData = null;
+  document.getElementById('enrollmentPreview').style.display = 'none';
+  document.getElementById('enrollmentPlaceholder').style.display = 'block';
+  document.getElementById('openEnrollmentCamBtn').textContent = ' Open Camera';
+  document.getElementById('openEnrollmentCamBtn').disabled = false;
+  document.getElementById('openEnrollmentCamBtn').onclick = openEnrollmentCamera;
+  document.getElementById('retakeEnrollmentBtn').style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const custPanel = document.getElementById('panel-customer');
+  const workerPanel = document.getElementById('panel-worker');
+  const workerRegPanel = document.getElementById('panel-worker-reg');
+  const adminPanel = document.getElementById('panel-admin');
+  if (custPanel.style.display !== 'none') customerLogin();
+  else if (workerPanel.style.display !== 'none') workerLogin();
+  else if (workerRegPanel.style.display !== 'none') workerRegister();
+  else if (adminPanel.style.display !== 'none') adminLogin();
+});
+</script>
+</body>
+</html>

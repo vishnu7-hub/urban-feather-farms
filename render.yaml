@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: urban-feather-farms
+    env: node
+    rootDir: urban farms
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_PHONE
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        value: Farm Owner
+      - key: ADMIN_BYPASS_CODE
+        sync: false

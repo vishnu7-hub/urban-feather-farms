@@ -1,0 +1,24 @@
+{
+  "name": "urban-farms",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "twilio": "^5.4.0",
+    "bcryptjs": "^2.4.3",
+    "@aws-sdk/client-rekognition": "^3.888.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "favicons": "^7.3.0"
+  }
+}

@@ -1,0 +1,742 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Urban Farms — BE Panel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--forest:#1E3420;--forest-deep:#122010;--gold:#C79A3E;--gold-light:#E7C878;--rust:#9C3A22;--rust-light:#C1552E;--cream:#F7F1E1;--cream-soft:#FBF8EF;--sage:#6C8752;}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--cream);color:#211D15;min-height:100vh;}
+.top-bar{background:var(--forest-deep);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+.top-bar h1{font-size:1.1rem;color:var(--gold-light);}
+.top-bar .user-info{font-size:0.82rem;color:rgba(247,241,225,0.7);}
+.top-bar .logout{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:7px 14px;border-radius:100px;font-size:0.8rem;cursor:pointer;font-weight:600;}
+.top-bar .logout:hover{background:var(--rust);}
+.translator-wrapper{position:relative;display:inline-flex;align-items:center;}
+.translator-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .2s ease;}
+.translator-toggle:hover{background:rgba(255,255,255,0.16);}
+.translator-menu{position:absolute;top:calc(100% + 10px);right:0;display:none;flex-direction:column;gap:8px;padding:10px;background:rgba(18,32,16,0.96);border:1px solid rgba(255,255,255,0.12);border-radius:18px;min-width:160px;z-index:1000;}
+.translator-menu.open{display:flex;}
+.translator-menu .lang-btn{width:100%;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;text-align:left;}
+.translator-menu .lang-btn.active,.translator-menu .lang-btn:hover{background:rgba(231,200,120,0.18);border-color:rgba(231,200,120,0.35);}
+.container{max-width:1000px;margin:0 auto;padding:20px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:#fff;border-radius:14px;padding:16px;text-align:center;border:1px solid rgba(33,29,21,0.08);}
+.stat-card b{display:block;font-size:1.6rem;color:var(--rust);}
+.stat-card span{font-size:0.78rem;color:#5a5646;text-transform:uppercase;letter-spacing:0.04em;}
+.shift-panel{background:#fff;border:1px solid rgba(33,29,21,0.08);border-radius:14px;padding:14px;margin-bottom:20px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.shift-panel .shift-copy{font-size:.85rem;color:#5a5646;line-height:1.45;}
+.shift-panel .shift-copy b{color:var(--forest-deep);display:block;}
+.section-title{font-size:1.1rem;color:var(--forest-deep);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.delivery-list{display:flex;flex-direction:column;gap:12px;margin-bottom:30px;}
+.delivery-card{background:#fff;border-radius:14px;padding:18px;border:1px solid rgba(33,29,21,0.08);box-shadow:0 4px 12px rgba(18,32,16,0.06);}
+.delivery-card .header{display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;}
+.delivery-card .id{font-family:monospace;font-size:0.78rem;color:var(--gold-dim);font-weight:600;}
+.delivery-card .status{font-size:0.72rem;padding:3px 10px;border-radius:100px;font-weight:600;}
+.status-pending{background:#fef3c7;color:#92400e;}
+.status-assigned{background:#dbeafe;color:#1e40af;}
+.status-delivered{background:#d1fae5;color:#065f46;}
+.delivery-card .details{font-size:0.9rem;line-height:1.6;}
+.delivery-card .details .label{color:#5a5646;font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
+.delivery-card .details .val{font-weight:600;}
+.delivery-card .details .addr{color:#3f3c2f;font-size:0.88rem;}
+.delivery-card .actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:100px;border:none;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{background:var(--rust-light);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.btn-secondary{background:var(--cream);color:var(--forest);border:1.5px solid var(--forest);}
+.btn-secondary:hover{background:var(--forest);color:#fff;}
+.btn-small{padding:8px 14px;font-size:0.8rem;}
+.photo-preview{max-width:240px;border-radius:12px;margin-top:10px;border:2px solid var(--cream-deep);}
+.empty-state{text-align:center;padding:50px 20px;color:#5a5646;}
+.empty-state .icon{font-size:3rem;margin-bottom:14px;}
+.empty-state p{font-size:0.92rem;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.camera-modal{background:#000;border-radius:20px;max-width:500px;width:100%;overflow:hidden;position:relative;}
+.camera-modal video{width:100%;display:block;max-height:70vh;object-fit:cover;}
+.camera-modal .camera-controls{position:absolute;bottom:0;left:0;right:0;padding:16px;display:flex;justify-content:center;gap:14px;background:linear-gradient(transparent,rgba(0,0,0,0.7));}
+.camera-btn{width:64px;height:64px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,0.2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.6rem;transition:all .2s;}
+.camera-btn:hover{background:rgba(255,255,255,0.4);}
+.camera-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.camera-modal .top-close{position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.5);color:#fff;border:none;width:36px;height:36px;border-radius:50%;font-size:1.2rem;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;}
+.camera-modal .prompt-text{position:absolute;top:16px;left:16px;right:60px;color:#fff;font-size:0.85rem;background:rgba(0,0,0,0.5);padding:8px 14px;border-radius:10px;}
+.captured-preview{max-width:100%;max-height:70vh;display:block;}
+.history-list{display:flex;flex-direction:column;gap:8px;}
+.history-item{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid rgba(33,29,21,0.06);display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+.history-item .hi-id{font-family:monospace;font-size:0.78rem;color:#8a856c;}
+.history-item .hi-details{font-size:0.85rem;}
+.history-item .hi-time{font-size:0.78rem;color:#5a5646;}
+.tab-bar{display:flex;gap:4px;background:var(--cream);border-radius:12px;padding:4px;margin-bottom:20px;border:1px solid rgba(33,29,21,0.08);}
+.tab{flex:1;padding:9px;text-align:center;border-radius:10px;border:none;background:transparent;font-weight:600;font-size:0.82rem;color:#5a5646;cursor:pointer;}
+.tab.active{background:#fff;color:var(--forest);box-shadow:0 2px 6px rgba(18,32,16,0.1);}
+.hidden{display:none;}
+#shopModal .modal-box{background:linear-gradient(145deg,#fffdf7,#f4f8ee)!important;border:1px solid #dbe6d2;box-shadow:0 24px 70px rgba(18,32,16,.28);max-height:92vh;overflow:auto;}
+#shopModal .form-group{margin:0 0 13px;}
+#shopModal .form-group label,#shopModal>div>div>div>label{color:var(--forest-deep);font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;font-weight:800;}
+#shopModal input{background:#fff!important;border:1px solid #d5dfcc!important;border-radius:12px!important;padding:12px 14px!important;font-size:.95rem;}
+#shopModal input:focus{outline:3px solid rgba(199,154,62,.22);border-color:var(--gold)!important;}
+#shopModal #shopPhotoArea,#shopModal #ownerPhotoArea{background:#1d281d!important;border:2px solid #cbdcc0;min-height:190px!important;border-radius:15px!important;}
+#shopModal #shopPhotoArea>div,#shopModal #ownerPhotoArea>div{color:#dce8d5!important;text-align:center;font-size:.82rem;}
+#shopModal .btn-primary{box-shadow:0 6px 14px rgba(156,58,34,.2);}
+@media(max-width:700px){#shopModal{padding:8px}.modal-overlay#shopModal>div{padding:18px!important}.modal-overlay#shopModal>div>div:nth-of-type(1){display:block!important}.modal-overlay#shopModal #ownerPhotoArea{min-height:190px!important}}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stat-card{padding:12px;}
+  .stat-card b{font-size:1.2rem;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <div>
+      <h1>🧑‍💼 BE Panel</h1>
+      <div class="user-info" id="userInfo">Loading...</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="translator-wrapper">
+        <button class="translator-toggle" id="translatorToggle" aria-expanded="false">
+          <span>🌐</span> <span class="translator-label">EN</span>
+        </button>
+        <div class="translator-menu" id="translatorMenu">
+          <button class="lang-btn active" data-lang="en">🇬🇧 English</button>
+          <button class="lang-btn" data-lang="te">🌿 తెలుగు</button>
+          <button class="lang-btn" data-lang="hi">🇮🇳 हिंदी</button>
+        </div>
+      </div>
+      <button class="logout" onclick="logout()">🚪 Logout</button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><b id="assignedCount">0</b><span>Assigned</span></div>
+    <div class="stat-card"><b id="deliveredToday">0</b><span>Delivered Today</span></div>
+    <div class="stat-card"><b id="totalDelivered">0</b><span>Total Delivered</span></div>
+  </div>
+
+  <div class="shift-panel">
+    <div class="shift-copy"><b id="shiftStatus">Off shift</b><span id="shiftDetail">Start your shift to register shop visits and share live location.</span></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn btn-primary" id="shiftButton" onclick="toggleShift()">Start Shift</button>
+      <button class="btn btn-secondary" id="registerShopBtn" onclick="openShopModal()">➕ Register Shop</button>
+    </div>
+  </div>
+  <p id="locationNotice" style="margin:0 0 16px;font-size:.82rem;color:#5a5646;">Location is required while you are on shift and making visits.</p>
+
+    <div class="tab-bar">
+      <button class="tab active" data-tab="pending">Pending Tasks</button>
+      <button class="tab" data-tab="verifications">Verifications</button>
+      <button class="tab" data-tab="history">History</button>
+  </div>
+
+  <div id="tab-pending">
+    <div class="delivery-list" id="deliveryList">
+      <div class="empty-state"><div class="icon">📭</div><p>No assigned tasks yet.</p></div>
+    </div>
+  </div>
+
+  <div id="tab-verifications" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 class="section-title">Orders Requiring Verification</h3>
+      <button class="btn btn-secondary" onclick="loadVerificationsWorker()">Refresh</button>
+    </div>
+    <div id="verificationsList" class="delivery-list">
+      <div class="empty-state"><div class="icon">🔔</div><p>No verification requests.</p></div>
+    </div>
+  </div>
+
+  <div id="tab-history" class="hidden">
+    <div class="history-list" id="historyList">
+      <div class="empty-state"><div class="icon">📋</div><p>No completed visits yet.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Camera Modal: Step 1 Selfie + Step 2 Shop/Face photo -->
+<div class="modal-overlay" id="cameraModal">
+  <div class="camera-modal">
+    <button class="top-close" onclick="closeCamera()">✕</button>
+    <div id="selfieStep" style="position:relative;">
+      <div class="prompt-text">📸 Step 1/2: Take a selfie for face verification</div>
+      <div id="selfieCameraView" style="position:relative;">
+        <video id="selfieVideo" autoplay playsinline style="width:100%;max-height:70vh;object-fit:cover;"></video>
+        <div class="camera-controls"><button class="camera-btn" onclick="captureSelfie()">📸</button></div>
+      </div>
+      <div id="selfiePreviewView" style="display:none;position:relative;">
+        <img id="selfieCapturedImg" class="captured-preview" alt="Selfie">
+        <div class="camera-controls">
+          <button class="camera-btn" onclick="retakeSelfie()" style="width:50px;height:50px;font-size:1rem;">↺</button>
+          <button class="camera-btn" onclick="proceedToShopPhoto()" style="width:50px;height:50px;font-size:1rem;background:var(--sage);">✓</button>
+        </div>
+      </div>
+    </div>
+    <div id="shopStep" style="display:none;position:relative;">
+      <div class="prompt-text">📸 Step 2/2: Show your face with the shop/address visible</div>
+      <div id="shopCameraView" style="position:relative;">
+        <video id="shopVideo" autoplay playsinline style="width:100%;max-height:70vh;object-fit:cover;"></video>
+        <div class="camera-controls"><button class="camera-btn" onclick="captureShopPhoto()">📸</button></div>
+      </div>
+      <div id="shopPreviewView" style="display:none;position:relative;">
+        <img id="shopCapturedImg" class="captured-preview" alt="Shop photo">
+        <div class="camera-controls">
+          <button class="camera-btn" onclick="retakeShopPhoto()" style="width:50px;height:50px;font-size:1rem;">↺</button>
+          <button class="camera-btn" onclick="submitDelivery()" style="width:50px;height:50px;font-size:1rem;background:var(--sage);">✓</button>
+        </div>
+      </div>
+    </div>
+</div>
+</div>
+
+        <!-- Modal: Shop Registration -->
+        <div class="modal-overlay" id="shopModal">
+          <div class="modal-box" style="max-width:760px;border-radius:20px;padding:24px;">
+            <button class="top-close" onclick="closeShopModal()" style="position:absolute;top:12px;right:12px;background:#eee;border:none;border-radius:50%;width:36px;height:36px;">✕</button>
+            <h3 style="margin-top:0;color:var(--forest-deep);font-size:1.35rem;">Register your shop</h3>
+            <p style="margin:-4px 0 16px;color:#6b765d;font-size:.9rem;">Urban Feather Farms · capture shop and owner details</p>
+            <div id="shopError" style="color:var(--rust);display:none;margin-bottom:8px;"></div>
+            <div class="form-group"><label>Shop Name</label><input id="shopName" placeholder="Shop name"></div>
+            <div class="form-group"><label>Owner Name</label><input id="ownerName" placeholder="Owner full name"></div>
+            <div class="form-group"><label>Owner Phone</label><input id="ownerPhone" placeholder="10-digit mobile" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+            <div class="form-group"><label>Address</label><input id="shopAddress" placeholder="Full shop address"></div>
+            <div class="form-group" style="display:flex;gap:8px;"><input id="shopArea" placeholder="Area/Locality" style="flex:1"><input id="shopPincode" placeholder="Pincode" maxlength="6" style="width:120px" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+              <div style="flex:1;">
+                <label>Shop Photo (camera)</label>
+                <div style="background:#000;border-radius:8px;min-height:140px;display:flex;align-items:center;justify-content:center;overflow:hidden;" id="shopPhotoArea">
+                  <video id="shopRegVideo" autoplay playsinline style="width:100%;display:none;"></video>
+                  <img id="shopPhotoPreview" style="width:100%;display:none;border-radius:8px;" alt="Shop preview">
+                  <div id="shopPhotoPlaceholder" style="color:#8a856c;padding:12px;">Open camera to capture shop photo</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-secondary" onclick="openShopCamera()" id="openShopCamBtn">Open Camera</button><button class="btn btn-primary" onclick="captureShopPhoto()" id="captureShopBtn" style="display:none;">Capture Photo</button><button class="btn btn-secondary" onclick="retakeShopPhoto()" id="retakeShopBtn" style="display:none;">Retake</button></div>
+              </div>
+              <div style="width:200px;">
+                <label>Owner Photo (camera)</label>
+                <div style="background:#000;border-radius:8px;min-height:140px;display:flex;align-items:center;justify-content:center;overflow:hidden;" id="ownerPhotoArea">
+                  <video id="ownerRegVideo" autoplay playsinline style="width:100%;display:none;"></video>
+                  <img id="ownerPhotoPreview" style="width:100%;display:none;border-radius:8px;" alt="Owner preview">
+                  <div id="ownerPhotoPlaceholder" style="color:#8a856c;padding:12px;">Open camera to capture owner photo</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-secondary" onclick="openOwnerCamera()" id="openOwnerCamBtn">Open Camera</button><button class="btn btn-primary" onclick="captureOwnerPhoto()" id="captureOwnerBtn" style="display:none;">Capture Photo</button><button class="btn btn-secondary" onclick="retakeOwnerPhoto()" id="retakeOwnerBtn" style="display:none;">Retake</button></div>
+              </div>
+            </div>
+<div style="margin-top:12px;">
+              <label>Voice Note (owner confirms they accept to take orders)</label>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+                <span style="font-size:0.85rem;color:#5a5646;">Use the 🎙️ Voice Note button at the bottom-right corner of the screen.</span>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+              <input type="checkbox" id="regOwnerConsent" style="width:auto;">
+              <label for="regOwnerConsent" style="margin:0;font-size:0.86rem;">The shop owner accepts to take orders from Urban Farms.</label>
+            </div>
+<div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-primary" onclick="submitShopRegistration()">Submit Registration</button>
+              <button class="btn btn-secondary" onclick="closeShopModal()">Cancel</button>
+              <div style="margin-left:auto;color:#5a5646;font-size:0.85rem;">Location will be captured automatically when you submit.</div>
+            </div>
+</div>
+        </div>
+
+<!-- Modal: BE Verification -->
+<div class="modal-overlay" id="beVerifyModal">
+  <div class="modal-box">
+    <h3>Verify Order</h3>
+    <div id="beVerifyContent"></div>
+    <div class="form-group"><label>Call outcome / notes</label><textarea id="beVerifyNotes" placeholder="Call notes: asked to confirm product/qty/address, owner confirmed, etc." style="width:100%;min-height:80px;padding:10px;border-radius:10px;border:1.5px solid rgba(33,29,21,0.12);background:var(--cream-soft);"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeBeVerifyModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitBeVerify()">Confirm verification</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let currentDeliveryId = null;
+let selfiePhotoData = null;
+let shopPhotoData = null;
+let selfieStream = null;
+let shopStream = null;
+let locationWatchId = null;
+let locationIntervalId = null;
+let onShift = false;
+
+function getToken() { return localStorage.getItem('uf_token'); }
+function getUser() { try { return JSON.parse(localStorage.getItem('uf_user')); } catch { return null; } }
+
+const user = getUser();
+const token = getToken();
+if (!token || !user || user.role !== 'worker') { window.location.href = '/login.html'; }
+document.getElementById('userInfo').textContent = 'Welcome, ' + user.name;
+
+async function api(path, opts) {
+  const headers = { 'Authorization': 'Bearer ' + token };
+  if (opts && opts.body && !(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+  const res = await fetch(API + path, { ...opts, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function getCurrentLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('Location not supported'));
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+      () => reject(new Error('Allow location access')),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    );
+  });
+}
+
+function startLocationTracking() {
+  if (!navigator.geolocation || locationWatchId !== null || locationIntervalId !== null) return;
+  const sendLocation = () => {
+    navigator.geolocation.getCurrentPosition(pos => {
+      api('/api/worker/location', { method: 'POST', body: JSON.stringify({ location: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy } }) })
+        .then(() => { document.getElementById('locationNotice').textContent = 'Location sharing is active (updated just now).'; document.getElementById('locationNotice').style.color = 'var(--sage)'; })
+        .catch(() => { document.getElementById('locationNotice').textContent = 'Location update failed. Keep GPS enabled and reconnect before completing delivery.'; document.getElementById('locationNotice').style.color = 'var(--rust)'; });
+    }, () => { document.getElementById('locationNotice').textContent = 'Location access was lost. Re-enable GPS before completing delivery.'; document.getElementById('locationNotice').style.color = 'var(--rust)'; }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+  };
+  sendLocation();
+  locationIntervalId = window.setInterval(sendLocation, 60000);
+  locationWatchId = navigator.geolocation.watchPosition(pos => {
+    api('/api/worker/location', { method: 'POST', body: JSON.stringify({ location: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy } }) })
+      .then(() => { document.getElementById('locationNotice').textContent = 'Location sharing is active.'; document.getElementById('locationNotice').style.color = 'var(--sage)'; })
+      .catch(() => { document.getElementById('locationNotice').textContent = 'Location update failed. Keep GPS enabled and reconnect before completing delivery.'; document.getElementById('locationNotice').style.color = 'var(--rust)'; });
+  }, () => { document.getElementById('locationNotice').textContent = 'Location access was lost. Re-enable GPS before completing delivery.'; document.getElementById('locationNotice').style.color = 'var(--rust)'; }, { enableHighAccuracy: true, maximumAge: 30000, timeout: 20000 });
+}
+function stopLocationTracking() {
+  if (locationWatchId !== null) navigator.geolocation.clearWatch(locationWatchId);
+  if (locationIntervalId !== null) window.clearInterval(locationIntervalId);
+  locationWatchId = null;
+  locationIntervalId = null;
+  const notice = document.getElementById('locationNotice'); if (notice) { notice.textContent = 'Location sharing is off. Start your shift to enable updates.'; notice.style.color = '#5a5646'; }
+}
+
+async function loadShiftStatus() {
+  try {
+    const d = await api('/api/worker/status');
+    onShift = d.status.onShift;
+    document.getElementById('shiftStatus').textContent = onShift ? 'On shift \u00B7 ' + d.status.availability : 'Off shift';
+    document.getElementById('shiftDetail').textContent = onShift ? 'Shops today: ' + d.status.shopsVisited + '. Delivered today: ' + d.status.deliveredToday + '.' : 'Start your shift to receive deliveries.';
+    if (onShift && !d.status.locationFresh) { document.getElementById('locationNotice').textContent = 'Location is not current. Enable GPS before accepting or completing a delivery.'; document.getElementById('locationNotice').style.color = 'var(--rust)'; }
+    document.getElementById('shiftButton').textContent = onShift ? 'End Shift' : 'Start Shift';
+    if (onShift) startLocationTracking(); else stopLocationTracking();
+  } catch (e) { console.error(e); }
+}
+
+async function toggleShift() {
+  const btn = document.getElementById('shiftButton'); btn.disabled = true;
+  try {
+    if (onShift) { await api('/api/worker/shift/end', { method: 'POST' }); stopLocationTracking(); }
+    else { const loc = await getCurrentLocation(); await api('/api/worker/shift/start', { method: 'POST', body: JSON.stringify({ location: loc }) }); startLocationTracking(); }
+    await loadShiftStatus(); loadDeliveries();
+  } catch (e) { alert(e.message); } finally { btn.disabled = false; }
+}
+
+document.querySelector('.tab-bar').addEventListener('click', function(e) {
+  const tab = e.target.closest('.tab'); if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('tab-pending').classList.toggle('hidden', tab.dataset.tab !== 'pending');
+  document.getElementById('tab-verifications').classList.toggle('hidden', tab.dataset.tab !== 'verifications');
+  document.getElementById('tab-history').classList.toggle('hidden', tab.dataset.tab !== 'history');
+  if (tab.dataset.tab === 'history') loadHistory();
+  if (tab.dataset.tab === 'verifications') loadVerificationsWorker();
+});
+
+async function loadDeliveries() {
+  try {
+    const d = await api('/api/worker/deliveries');
+    const list = document.getElementById('deliveryList');
+    const deliveries = d.deliveries || [];
+    document.getElementById('assignedCount').textContent = deliveries.length;
+    document.getElementById('totalDelivered').textContent = (await getDeliveredCount());
+    if (deliveries.length === 0) { list.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No deliveries assigned yet.</p></div>'; return; }
+    list.innerHTML = deliveries.map(del => 
+      '<div class="delivery-card"><div class="header"><span class="id">' + del.id + '</span><span class="status status-' + del.deliveryStatus + '">' + del.deliveryStatus.charAt(0).toUpperCase() + del.deliveryStatus.slice(1) + '</span></div>' +
+      '<div class="details"><div><span class="label">Product:</span> <span class="val">' + del.product + '</span> \u2014 ' + del.quantity + ' ' + del.unit + (del.quantity > 1 ? 's' : '') + '</div>' +
+      '<div style="margin-top:4px;"><span class="label">Customer:</span> <span class="val">' + del.customerName + '</span> (' + del.customerPhone + ')</div>' +
+      '<div class="addr"><a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(del.address + ', ' + del.area + ', ' + del.city + ', ' + del.pincode) + '" target="_blank" rel="noopener" style="color:var(--rust);text-decoration:underline;">📍 Get Directions →</a><br>' + del.address + ', ' + del.area + ', ' + del.city + ' \u2014 ' + del.pincode + '</div>' +
+      (del.deliveryDate ? '<div style="margin-top:4px;"><span class="label">Delivery Date:</span> ' + del.deliveryDate + '</div>' : '') +
+      (del.notes ? '<div style="margin-top:4px;"><span class="label">Notes:</span> ' + del.notes + '</div>' : '') +
+      '</div><div class="actions">' +
+      (del.deliveryStatus === 'assigned' ? '<button class="btn btn-primary btn-small" onclick="startDelivery(\'' + del.id + '\')">\uD83D\uDE9A Start Delivery</button>' : '<button class="btn btn-primary btn-small" onclick="openCamera(\'' + del.id + '\')">\uD83D\uDCF8 Complete Delivery</button>') +
+      '<button class="btn btn-secondary btn-small" onclick="reportException(\'' + del.id + '\')">Report issue</button>' +
+      '</div></div>'
+    ).join('');
+  } catch (e) { document.getElementById('deliveryList').innerHTML = '<div class="empty-state"><p style="color:var(--rust)">\u26A0 ' + e.message + '</p></div>'; }
+}
+
+async function getDeliveredCount() { try { const d = await api('/api/worker/history'); return (d.history || []).length; } catch { return 0; } }
+
+async function startDelivery(id) {
+  try {
+    const location = await getCurrentLocation();
+    await api('/api/worker/deliver/' + id + '/start', { method: 'POST', body: JSON.stringify({ location: location }) });
+    await loadShiftStatus(); loadDeliveries();
+  } catch (e) { alert('Location is required to start delivery: ' + e.message); }
+}
+async function reportException(id) {
+  const reason = prompt('Describe the delivery issue (customer unavailable, address issue, etc.):');
+  if (!reason) return;
+  try { await api('/api/worker/deliver/' + id + '/exception', { method: 'POST', body: JSON.stringify({ reason }) }); alert('Issue reported to the admin team.'); loadDeliveries(); }
+  catch (e) { alert(e.message); }
+}
+
+async function loadHistory() {
+  try {
+    const d = await api('/api/worker/history');
+    const list = document.getElementById('historyList');
+    const history = d.history || [];
+    document.getElementById('deliveredToday').textContent = history.filter(function(h) { if (!h.deliveredAt) return false; var dt = new Date(h.deliveredAt); var n = new Date(); return dt.toDateString() === n.toDateString(); }).length;
+    if (history.length === 0) { list.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No completed deliveries yet.</p></div>'; return; }
+    list.innerHTML = history.map(function(h) {
+return '<div class="history-item"><div><div class="hi-id">' + h.id + '</div><div class="hi-details"><b>' + h.product + '</b> \u2014 ' + h.quantity + ' ' + h.unit + (h.quantity > 1 ? 's' : '') + ' \u2192 <b>' + h.customerName + '</b></div><div class="addr" style="font-size:0.82rem;color:#5a5646;"><a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(h.address) + '" target="_blank" rel="noopener" style="color:var(--rust);text-decoration:underline;font-weight:600;">📍</a> ' + h.address + '</div><div class="hi-time">' + (h.deliveredAt ? new Date(h.deliveredAt).toLocaleString('en-IN') : '-') + '</div></div>' +
+        (h.deliveryPhoto ? '<img src="' + h.deliveryPhoto + '" class="photo-preview" style="max-width:80px;max-height:80px;border-radius:8px;">' : '') +
+      '</div>';
+    }).join('');
+  } catch (e) { document.getElementById('historyList').innerHTML = '<div class="empty-state"><p style="color:var(--rust)">\u26A0 ' + e.message + '</p></div>'; }
+}
+
+// BE verifications list + verify action
+async function loadVerificationsWorker() {
+  try {
+    const data = await api('/api/worker/verifications');
+    const list = document.getElementById('verificationsList');
+    const items = data.verifications || [];
+    if (!items.length) { list.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><p>No verification requests.</p></div>'; return; }
+    list.innerHTML = items.map(function(o) {
+      const addr = (o.address || '') + (o.area ? ', ' + o.area : '') + ', ' + (o.city || '') + ' — ' + (o.pincode || '');
+      return '<div class="delivery-card"><div class="header"><span class="id">' + o.id + '</span><span class="status status-pending">Pending Verification</span></div>' +
+        '<div class="details"><div><span class="label">Customer:</span> <span class="val">' + (o.customerName || '-') + '</span> (' + (o.customerPhone || '-') + ')</div>' +
+        '<div style="margin-top:6px;"><span class="label">Product:</span> ' + o.product + ' — ' + o.quantity + ' ' + o.unit + '</div>' +
+        '<div class="addr" style="margin-top:6px;">' + addr + '</div>' +
+        (o.deliveryDate ? '<div style="margin-top:6px;"><span class="label">Delivery:</span> ' + o.deliveryDate + (o.deliverySlot ? ' · ' + o.deliverySlot : '') + '</div>' : '') +
+        (o.beNotifiedAt ? '<div style="margin-top:6px;color:#5a5646;font-size:0.85rem;">Notified: ' + new Date(o.beNotifiedAt).toLocaleString('en-IN') + ' · ' + (o.beNotifiedCount || 0) + ' BEs</div>' : '') +
+        '<div class="actions" style="margin-top:12px;"><button class="btn btn-primary" onclick="verifyOrder(\'' + o.id + '\')">✅ Mark Verified</button><button class="btn btn-secondary" onclick="viewVerification(\'' + o.id + '\')">View</button></div>' +
+        '</div></div>';
+    }).join('');
+  } catch (e) { document.getElementById('verificationsList').innerHTML = '<div class="empty-state"><p style="color:var(--rust);">⚠ ' + e.message + '</p></div>'; }
+}
+
+async function verifyOrder(id) {
+  // open modal to collect call notes and provide click-to-call
+  try {
+    const data = await api('/api/admin/order/' + id);
+    const o = data.order;
+    document.getElementById('beVerifyNotes').value = '';
+    document.getElementById('beVerifyContent').innerHTML = '<div><b>Order:</b> ' + o.id + '</div><div style="margin-top:6px;"><b>Customer:</b> ' + o.customerName + ' (' + o.customerPhone + ')</div><div style="margin-top:6px;"><b>Product:</b> ' + o.product + ' × ' + o.quantity + '</div><div style="margin-top:6px;"><b>Address:</b> ' + o.address + ', ' + o.city + ' — ' + o.pincode + '</div><div style="margin-top:8px;"><a href="tel:' + o.customerPhone + '" class="btn btn-secondary">Call Owner</a></div>';
+    window.__beVerifyOrderId = id;
+    document.getElementById('beVerifyModal').classList.add('open');
+  } catch (e) { alert(e.message); }
+}
+
+function closeBeVerifyModal() { document.getElementById('beVerifyModal').classList.remove('open'); window.__beVerifyOrderId = null; }
+
+async function submitBeVerify() {
+  const id = window.__beVerifyOrderId; if (!id) return closeBeVerifyModal();
+  const notes = document.getElementById('beVerifyNotes').value.trim();
+  try {
+    await api('/api/worker/order/' + id + '/verify', { method: 'POST', body: JSON.stringify({ notes }) });
+    alert('Order verified. It will be scheduled for delivery.');
+    closeBeVerifyModal(); loadVerificationsWorker(); loadDeliveries();
+  } catch (e) { alert(e.message); }
+}
+
+function viewVerification(id) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelector('[data-tab="pending"]').classList.add('active'); document.getElementById('tab-pending').classList.remove('hidden'); viewVerificationOrder(id); }
+
+async function viewVerificationOrder(id) { try { const data = await api('/api/admin/order/' + id); const o = data.order; alert('Order: ' + o.id + '\nCustomer: ' + o.customerName + ' (' + o.customerPhone + ')\nProduct: ' + o.product + ' x' + o.quantity + '\nAddress: ' + o.address + ', ' + o.city + ' — ' + o.pincode); } catch (e) { alert(e.message); } }
+
+// ---- DUAL CAMERA ----
+async function openCamera(deliveryId) {
+  currentDeliveryId = deliveryId; selfiePhotoData = null; shopPhotoData = null;
+  document.getElementById('selfieStep').style.display = 'block';
+  document.getElementById('selfieCameraView').style.display = 'block';
+  document.getElementById('selfiePreviewView').style.display = 'none';
+  document.getElementById('shopStep').style.display = 'none';
+  document.getElementById('cameraModal').classList.add('open');
+  try {
+    selfieStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    document.getElementById('selfieVideo').srcObject = selfieStream;
+  } catch (e) { alert('Camera required for face verification selfie.'); closeCamera(); }
+}
+
+function captureSelfie() {
+  var v = document.getElementById('selfieVideo');
+  var c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  selfiePhotoData = c.toDataURL('image/jpeg', 0.8);
+  if (selfieStream) { selfieStream.getTracks().forEach(function(t) { t.stop(); }); selfieStream = null; }
+  document.getElementById('selfieCapturedImg').src = selfiePhotoData;
+  document.getElementById('selfieCameraView').style.display = 'none';
+  document.getElementById('selfiePreviewView').style.display = 'block';
+}
+
+function retakeSelfie() {
+  selfiePhotoData = null;
+  document.getElementById('selfieCameraView').style.display = 'block';
+  document.getElementById('selfiePreviewView').style.display = 'none';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false })
+    .then(function(s) { selfieStream = s; document.getElementById('selfieVideo').srcObject = s; }).catch(function() {});
+}
+
+function proceedToShopPhoto() {
+  document.getElementById('selfieStep').style.display = 'none';
+  document.getElementById('shopStep').style.display = 'block';
+  document.getElementById('shopCameraView').style.display = 'block';
+  document.getElementById('shopPreviewView').style.display = 'none';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+    .then(function(s) { shopStream = s; document.getElementById('shopVideo').srcObject = s; })
+    .catch(function() { alert('Camera required for the delivery photo.'); });
+}
+
+function captureShopPhoto() {
+  var v = document.getElementById('shopVideo');
+  var c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  shopPhotoData = c.toDataURL('image/jpeg', 0.8);
+  if (shopStream) { shopStream.getTracks().forEach(function(t) { t.stop(); }); shopStream = null; }
+  document.getElementById('shopCapturedImg').src = shopPhotoData;
+  document.getElementById('shopCameraView').style.display = 'none';
+  document.getElementById('shopPreviewView').style.display = 'block';
+}
+
+function retakeShopPhoto() {
+  shopPhotoData = null;
+  document.getElementById('shopCameraView').style.display = 'block';
+  document.getElementById('shopPreviewView').style.display = 'none';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+    .then(function(s) { shopStream = s; document.getElementById('shopVideo').srcObject = s; }).catch(function() {});
+}
+
+function closeCamera() {
+  if (selfieStream) { selfieStream.getTracks().forEach(function(t) { t.stop(); }); selfieStream = null; }
+  if (shopStream) { shopStream.getTracks().forEach(function(t) { t.stop(); }); shopStream = null; }
+  document.getElementById('cameraModal').classList.remove('open');
+  currentDeliveryId = null; selfiePhotoData = null; shopPhotoData = null;
+}
+
+// ---- SHOP REGISTRATION ----
+let shopRegStream = null;
+let ownerRegStream = null;
+let shopPhotoDataReg = null;
+let ownerPhotoDataReg = null;
+
+function openShopModal() {
+  document.getElementById('shopModal').classList.add('open');
+  document.getElementById('shopError').style.display = 'none';
+}
+function closeShopModal() {
+  stopShopStreams();
+  stopRegRecordingStream();
+  document.getElementById('shopModal').classList.remove('open');
+}
+function stopShopStreams() {
+  if (shopRegStream) { shopRegStream.getTracks().forEach(t => t.stop()); shopRegStream = null; }
+  if (ownerRegStream) { ownerRegStream.getTracks().forEach(t => t.stop()); ownerRegStream = null; }
+}
+
+function openShopCamera() {
+  const vid = document.getElementById('shopRegVideo');
+  const placeholder = document.getElementById('shopPhotoPlaceholder');
+  const preview = document.getElementById('shopPhotoPreview');
+  placeholder.style.display = 'none'; preview.style.display = 'none'; vid.style.display = 'block';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+    .then(s => { shopRegStream = s; vid.srcObject = s; document.getElementById('openShopCamBtn').style.display = 'none'; document.getElementById('captureShopBtn').style.display = 'inline-flex'; document.getElementById('retakeShopBtn').style.display = 'none'; })
+    .catch(e => { document.getElementById('shopError').textContent = 'Camera access required for shop photo.'; document.getElementById('shopError').style.display = 'block'; });
+}
+
+function captureShopPhoto() {
+  const v = document.getElementById('shopRegVideo');
+  if (!shopRegStream || !v.videoWidth) { showShopPhotoError('Camera is still starting. Please try again.'); return; }
+  const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  shopPhotoDataReg = c.toDataURL('image/jpeg', 0.8);
+  stopShopStreams();
+  document.getElementById('shopRegVideo').style.display = 'none';
+  document.getElementById('captureShopBtn').style.display = 'none';
+  document.getElementById('shopPhotoPreview').src = shopPhotoDataReg; document.getElementById('shopPhotoPreview').style.display = 'block';
+  document.getElementById('retakeShopBtn').style.display = 'inline-flex';
+}
+
+function retakeShopPhoto() {
+  shopPhotoDataReg = null; document.getElementById('shopPhotoPreview').style.display = 'none'; document.getElementById('shopPhotoPlaceholder').style.display = 'block'; document.getElementById('retakeShopBtn').style.display = 'none'; document.getElementById('openShopCamBtn').style.display = 'inline-flex';
+}
+
+function openOwnerCamera() {
+  const vid = document.getElementById('ownerRegVideo');
+  const placeholder = document.getElementById('ownerPhotoPlaceholder');
+  const preview = document.getElementById('ownerPhotoPreview');
+  placeholder.style.display = 'none'; preview.style.display = 'none'; vid.style.display = 'block';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false })
+    .then(s => { ownerRegStream = s; vid.srcObject = s; document.getElementById('openOwnerCamBtn').style.display = 'none'; document.getElementById('captureOwnerBtn').style.display = 'inline-flex'; document.getElementById('retakeOwnerBtn').style.display = 'none'; })
+    .catch(e => { document.getElementById('shopError').textContent = 'Camera access required for owner photo.'; document.getElementById('shopError').style.display = 'block'; });
+}
+
+function captureOwnerPhoto() {
+  const v = document.getElementById('ownerRegVideo');
+  if (!ownerRegStream || !v.videoWidth) { showShopPhotoError('Camera is still starting. Please try again.'); return; }
+  const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  ownerPhotoDataReg = c.toDataURL('image/jpeg', 0.8);
+  stopShopStreams();
+  document.getElementById('ownerRegVideo').style.display = 'none';
+  document.getElementById('captureOwnerBtn').style.display = 'none';
+  document.getElementById('ownerPhotoPreview').src = ownerPhotoDataReg; document.getElementById('ownerPhotoPreview').style.display = 'block';
+  document.getElementById('retakeOwnerBtn').style.display = 'inline-flex';
+}
+
+function retakeOwnerPhoto() { ownerPhotoDataReg = null; document.getElementById('ownerPhotoPreview').style.display = 'none'; document.getElementById('ownerPhotoPlaceholder').style.display = 'block'; document.getElementById('retakeOwnerBtn').style.display = 'none'; document.getElementById('openOwnerCamBtn').style.display = 'inline-flex'; }
+
+function showShopPhotoError(message) { const el = document.getElementById('shopError'); el.textContent = message; el.style.display = 'block'; }
+
+// ---- VOICE NOTE RECORDER for shop registration ----
+let regMediaRecorder = null;
+let regAudioChunks = [];
+let regAudioBlobUrl = null;
+let regRecordingActive = false;
+
+function stopRegRecordingStream() {
+  if (regMediaRecorder && regMediaRecorder.state !== 'inactive') { try { regMediaRecorder.stop(); } catch (e) {} }
+  regMediaRecorder = null;
+}
+
+function toggleRegRecording() {
+  const btn = document.getElementById('regVoiceBtn');
+  if (regRecordingActive) {
+    // stop recording
+    if (regMediaRecorder && regMediaRecorder.state === 'recording') regMediaRecorder.stop();
+    regRecordingActive = false;
+    btn.textContent = '🎙️ Record Voice Note';
+    return;
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+    document.getElementById('shopError').textContent = 'Voice recording is not supported on this device/browser.';
+    document.getElementById('shopError').style.display = 'block';
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(function(stream) {
+      regAudioChunks = [];
+      regMediaRecorder = new MediaRecorder(stream);
+      regMediaRecorder.ondataavailable = function(e) { if (e.data && e.data.size > 0) regAudioChunks.push(e.data); };
+      regMediaRecorder.onstop = function() {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        const blob = new Blob(regAudioChunks, { type: regMediaRecorder && regMediaRecorder.mimeType ? regMediaRecorder.mimeType : 'audio/webm' });
+        if (regAudioBlobUrl) URL.revokeObjectURL(regAudioBlobUrl);
+        regAudioBlobUrl = URL.createObjectURL(blob);
+        window.__regVoiceBlob = blob;
+        document.getElementById('regVoiceStatus').textContent = 'Recorded';
+        document.getElementById('regVoicePlay').style.display = 'inline-flex';
+        document.getElementById('regVoiceRetake').style.display = 'inline-flex';
+        regRecordingActive = false;
+        btn.textContent = '🎙️ Record Again';
+      };
+      regMediaRecorder.start();
+      regRecordingActive = true;
+      btn.textContent = '⏹️ Stop Recording';
+      document.getElementById('regVoiceStatus').textContent = 'Recording...';
+      document.getElementById('regVoicePlay').style.display = 'none';
+      document.getElementById('regVoiceRetake').style.display = 'none';
+    })
+    .catch(function() {
+      document.getElementById('shopError').textContent = 'Microphone access is required to record the voice note.';
+      document.getElementById('shopError').style.display = 'block';
+    });
+}
+
+function playRegVoice() {
+  if (!regAudioBlobUrl) return;
+  const a = new Audio(regAudioBlobUrl);
+  a.play();
+}
+
+function retakeRegVoice() {
+  stopRegRecordingStream();
+  window.__regVoiceBlob = null;
+  if (regAudioBlobUrl) { URL.revokeObjectURL(regAudioBlobUrl); regAudioBlobUrl = null; }
+  document.getElementById('regVoiceStatus').textContent = 'Not recorded';
+  document.getElementById('regVoicePlay').style.display = 'none';
+  document.getElementById('regVoiceRetake').style.display = 'none';
+  document.getElementById('regVoiceBtn').textContent = '🎙️ Record Voice Note';
+  regRecordingActive = false;
+}
+
+function blobToDataUrl(blob) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function() { resolve(reader.result); };
+    reader.onerror = function() { reject(new Error('Failed to read recording')); };
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function submitShopRegistration() {
+  const name = document.getElementById('shopName').value.trim(); const ownerName = document.getElementById('ownerName').value.trim();
+  const ownerPhone = document.getElementById('ownerPhone').value.trim(); const address = document.getElementById('shopAddress').value.trim();
+  const area = document.getElementById('shopArea').value.trim(); const pincode = document.getElementById('shopPincode').value.trim();
+  document.getElementById('shopError').style.display = 'none';
+  if (!name || name.length < 3) { document.getElementById('shopError').textContent = 'Shop name is required.'; document.getElementById('shopError').style.display = 'block'; return; }
+  if (!ownerName || ownerName.length < 3) { document.getElementById('shopError').textContent = 'Owner name is required.'; document.getElementById('shopError').style.display = 'block'; return; }
+  if (!/^[6-9]\d{9}$/.test(ownerPhone)) { document.getElementById('shopError').textContent = 'Valid 10-digit owner phone required.'; document.getElementById('shopError').style.display = 'block'; return; }
+  if (!address || address.length < 10) { document.getElementById('shopError').textContent = 'Full address is required.'; document.getElementById('shopError').style.display = 'block'; return; }
+  if (!/^[0-9]{6}$/.test(pincode)) { document.getElementById('shopError').textContent = 'Valid 6-digit pincode required.'; document.getElementById('shopError').style.display = 'block'; return; }
+  if (!shopPhotoDataReg) { document.getElementById('shopError').textContent = 'Capture a shop photo.'; document.getElementById('shopError').style.display = 'block'; return; }
+  if (!ownerPhotoDataReg) { document.getElementById('shopError').textContent = 'Capture an owner photo.'; document.getElementById('shopError').style.display = 'block'; return; }
+  const consent = document.getElementById('regOwnerConsent').checked;
+  if (!consent) { document.getElementById('shopError').textContent = 'The shop owner must accept to take orders from Urban Farms.'; document.getElementById('shopError').style.display = 'block'; return; }
+if (!window.UFVoice || !window.UFVoice.hasBlob()) { document.getElementById('shopError').textContent = 'Record a voice note confirming the owner accepts to take orders.'; document.getElementById('shopError').style.display = 'block'; return; }
+try {
+    const loc = await getCurrentLocation();
+    const voiceNote = await window.UFVoice.getDataUrl();
+    const body = { shopName: name, ownerName, ownerPhone, address, area, pincode, city: 'Hyderabad', state: 'Telangana', shopPhoto: shopPhotoDataReg, ownerPhoto: ownerPhotoDataReg, latitude: loc.latitude, longitude: loc.longitude, ownerConsent: true, voiceNote };
+    // Report the worker's live location right before registering so the server's fresh-location check passes.
+    try { await api('/api/worker/location', { method: 'POST', body: JSON.stringify({ location: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy } }) }); } catch (locErr) {}
+    const res = await api('/api/worker/shop/register', { method: 'POST', body: JSON.stringify(body) });
+    alert('Shop registered: ' + (res.shop?.shopName || 'OK'));
+    closeShopModal(); loadDeliveries(); loadShiftStatus();
+  } catch (e) { document.getElementById('shopError').textContent = e.message || 'Registration failed'; document.getElementById('shopError').style.display = 'block'; }
+}
+
+async function submitDelivery() {
+  if (!currentDeliveryId || !selfiePhotoData || !shopPhotoData) return;
+  var btn = document.querySelector('#shopPreviewView .camera-btn:last-child');
+  btn.disabled = true; btn.textContent = '\u23F3';
+  try {
+    var location = await getCurrentLocation();
+    await api('/api/worker/deliver/' + currentDeliveryId, { method: 'POST', body: JSON.stringify({ photo: shopPhotoData, selfie: selfiePhotoData, location: location }) });
+    closeCamera(); loadDeliveries(); loadHistory(); loadShiftStatus();
+    document.querySelector('.tab[data-tab="history"]').click();
+    setTimeout(function() { document.querySelector('.tab[data-tab="pending"]').click(); }, 1500);
+  } catch (e) { alert('Delivery failed: ' + e.message); btn.disabled = false; btn.textContent = '\u2713'; }
+}
+
+function logout() {
+  stopLocationTracking();
+  localStorage.removeItem('uf_token'); localStorage.removeItem('uf_user');
+  window.location.href = '/login.html';
+}
+
+loadShiftStatus();
+loadDeliveries();
+</script>
+<!-- Google Translate Element (hidden) -->
+<div id="google_translate_element" style="display:none;position:absolute;top:-9999px;left:-9999px;"></div>
+<style>
+.goog-te-banner-frame.skiptranslate,.goog-te-gadget-simple,.goog-te-menu-frame,.goog-te-menu-value{display:none!important;}
+.goog-te-gadget{color:transparent!important;font-size:0!important;}
+body{top:0!important;}
+.skiptranslate{display:none!important;height:0!important;}
+</style>
+<script src="../assets/translator-enhanced.js"></script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="../assets/voice-recorder.js"></script>
+</body>
+</html>
+

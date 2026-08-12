@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urban Farms — My Account</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--forest:#1E3420;--forest-deep:#122010;--gold:#C79A3E;--gold-light:#E7C878;--rust:#9C3A22;--rust-light:#C1552E;--cream:#F7F1E1;--cream-soft:#FBF8EF;--sage:#6C8752;}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--cream);color:#211D15;min-height:100vh;}
+.top-bar{background:var(--forest-deep);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:10px;}
+.top-bar h1{font-size:1.1rem;color:var(--gold-light);}
+.top-bar .user-info{font-size:0.82rem;color:rgba(247,241,225,0.7);}
+.top-bar .actions{display:flex;gap:8px;}
+.top-bar .btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:7px 14px;border-radius:100px;font-size:0.78rem;cursor:pointer;font-weight:600;transition:all .2s;}
+.top-bar .btn:hover{background:var(--rust);}
+.container{max-width:1000px;margin:0 auto;padding:20px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:#fff;border-radius:14px;padding:16px;text-align:center;border:1px solid rgba(33,29,21,0.06);}
+.stat-card b{display:block;font-size:1.5rem;color:var(--rust);}
+.stat-card span{font-size:0.76rem;color:#5a5646;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
+.section-title{font-size:1.1rem;color:var(--forest-deep);margin-bottom:14px;display:flex;align-items:center;gap:8px;font-weight:700;}
+.order-list{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.order-card{background:#fff;border-radius:14px;padding:16px 18px;border:1px solid rgba(33,29,21,0.06);box-shadow:0 2px 8px rgba(18,32,16,0.04);}
+.order-card .header{display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+.order-card .id{font-family:monospace;font-size:0.78rem;color:#8a856c;font-weight:600;}
+.order-card .product{font-weight:700;font-size:0.92rem;}
+.order-card .details{font-size:0.88rem;line-height:1.7;}
+.order-card .details .label{color:#5a5646;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
+.order-card .details .addr{color:#3f3c2f;font-size:0.85rem;}
+.badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:0.7rem;font-weight:600;}
+.badge-paid{background:#d1fae5;color:#065f46;}
+.badge-partial{background:#dbeafe;color:#1e40af;}
+.badge-pending{background:#fef3c7;color:#92400e;}
+.badge-delivered{background:#d1fae5;color:#065f46;}
+.badge-assigned{background:#dbeafe;color:#1e40af;}
+.badge-pending-del{background:#fef3c7;color:#92400e;}
+.badge-out-for-delivery{background:#ede9fe;color:#5b21b6;}
+.order-card .actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+.tracking-panel{margin-top:14px;padding:14px;background:var(--cream-soft);border:1px solid rgba(33,29,21,0.08);border-radius:12px;}
+.tracking-title{font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--forest-deep);margin-bottom:12px;}
+.tracking-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.tracking-step{position:relative;padding-top:26px;font-size:.7rem;line-height:1.25;color:#8a856c;}
+.tracking-step::before{content:'';position:absolute;top:4px;left:0;width:15px;height:15px;border-radius:50%;background:#d6d0bc;border:3px solid var(--cream-soft);z-index:1;}
+.tracking-step::after{content:'';position:absolute;top:10px;left:14px;width:calc(100% - 8px);height:3px;background:#d6d0bc;}
+.tracking-step:last-child::after{display:none;}.tracking-step.done{color:var(--forest-deep);font-weight:700;}.tracking-step.done::before{background:var(--sage);}.tracking-step.done::after{background:var(--sage);}
+.tracking-step.active{color:var(--rust);font-weight:800;}.tracking-step.active::before{background:var(--rust);box-shadow:0 0 0 4px rgba(156,58,34,.15);}
+.live-track{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:10px;border-radius:9px;background:#e8f5e4;color:#285d2a;font-size:.78rem;font-weight:650;flex-wrap:wrap;}
+.live-track a{color:var(--rust);font-weight:800;text-decoration:underline;}.tracking-time{display:block;font-size:.66rem;font-weight:500;color:#6b6657;margin-top:3px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:100px;border:none;font-weight:600;font-size:0.82rem;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:hover{background:var(--rust-light);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.btn-secondary{background:var(--cream);color:var(--forest);border:1.5px solid var(--forest);}
+.btn-secondary:hover{background:var(--forest);color:#fff;}
+.btn-small{padding:7px 14px;font-size:0.78rem;}
+.btn-success{background:var(--sage);color:#fff;}
+.btn-success:hover{background:#4a6e3a;}
+.btn-success:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-warn{background:#f59e0b;color:#fff;}
+.btn-warn:hover{background:#d97706;}
+.empty-state{text-align:center;padding:50px 20px;color:#5a5646;}
+.empty-state .icon{font-size:3rem;margin-bottom:14px;}
+.empty-state p{font-size:0.92rem;}
+.photo-preview{max-width:200px;border-radius:10px;margin-top:8px;border:2px solid var(--cream-deep);}
+.action-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.translator-wrapper{position:relative;display:inline-flex;align-items:center;}
+.translator-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .2s ease;}
+.translator-toggle:hover{background:rgba(255,255,255,0.16);}
+.translator-menu{position:absolute;top:calc(100% + 10px);right:0;display:none;flex-direction:column;gap:8px;padding:10px;background:rgba(18,32,16,0.96);border:1px solid rgba(255,255,255,0.12);border-radius:18px;min-width:160px;z-index:1000;}
+.translator-menu.open{display:flex;}
+.translator-menu .lang-btn{width:100%;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.08);color:#fff;text-align:left;}
+.translator-menu .lang-btn.active,.translator-menu .lang-btn:hover{background:rgba(231,200,120,0.18);border-color:rgba(231,200,120,0.35);}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stat-card{padding:12px;}
+  .stat-card b{font-size:1.2rem;}
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div>
+    <h1>👤 My Account — Urban Farms</h1>
+    <div class="user-info" id="userInfo">Loading...</div>
+  </div>
+  <div class="actions" style="display:flex;gap:8px;align-items:center;">
+    <div class="translator-wrapper">
+      <button class="translator-toggle" id="translatorToggle" aria-expanded="false">
+        <span>🌐</span> <span class="translator-label">EN</span>
+      </button>
+      <div class="translator-menu" id="translatorMenu">
+        <button class="lang-btn active" data-lang="en">🇬🇧 English</button>
+        <button class="lang-btn" data-lang="te">🌿 తెలుగు</button>
+        <button class="lang-btn" data-lang="hi">🇮🇳 हिंदी</button>
+      </div>
+    </div>
+    <button class="btn" onclick="logout()">🚪 Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="stats-row">
+    <div class="stat-card"><b id="totalOrders">0</b><span>Total Orders</span></div>
+    <div class="stat-card"><b id="activeOrders">0</b><span>Active</span></div>
+    <div class="stat-card"><b id="deliveredOrders">0</b><span>Delivered</span></div>
+  </div>
+
+  <div class="action-bar">
+    <a class="btn btn-primary" href="/#orders">🛒 Place New Order</a>
+    <button class="btn btn-secondary" onclick="loadOrders()">🔄 Refresh</button>
+  </div>
+
+  <div class="section-title">📋 My Orders</div>
+  <div style="background:#fff7ed;border-left:4px solid #f59e0b;border-radius:10px;padding:12px 14px;margin:0 0 20px;font-size:.84rem;color:#5a5646;"><b style="color:#7c2d12;">Cancellation &amp; refund policy:</b> cancel before dispatch for refund review. Once dispatched, orders cannot be cancelled or refunded. Delivered orders are eligible only for a damaged-product claim.</div>
+  <div id="notificationList" style="margin:0 0 16px;"></div>
+  <div class="order-list" id="orderList">
+    <div class="empty-state">
+      <div class="icon">📭</div>
+      <p>No orders yet. Place your first order!</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+
+function getToken() { return localStorage.getItem('uf_token'); }
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('uf_user')); } catch { return null; }
+}
+
+const user = getUser();
+const token = getToken();
+if (!token || !user || (user.role !== 'customer' && user.role !== 'shop')) {
+  window.location.href = '/login.html';
+}
+
+document.getElementById('userInfo').textContent = `Welcome, ${user.name} (${user.phone})`;
+
+async function api(path, opts = {}) {
+  const headers = { 'Authorization': 'Bearer ' + token, ...opts.headers };
+  if (!(opts.body instanceof FormData) && opts.body) headers['Content-Type'] = 'application/json';
+  const res = await fetch(API + path, { ...opts, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function formatTrackingTime(value) {
+  return value ? new Date(value).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+}
+
+function renderTracking(order) {
+  const stages = [
+    { label: 'Order placed', time: order.createdAt, complete: true },
+    { label: 'Partner assigned', time: order.assignedAt, complete: ['assigned', 'out_for_delivery', 'delivered'].includes(order.deliveryStatus) },
+    { label: 'Out for delivery', time: order.deliveryStartedAt, complete: ['out_for_delivery', 'delivered'].includes(order.deliveryStatus) },
+    { label: 'Delivered', time: order.deliveredAt, complete: order.deliveryStatus === 'delivered' }
+  ];
+  const activeIndex = order.deliveryStatus === 'pending' ? 0 : order.deliveryStatus === 'assigned' ? 1 : order.deliveryStatus === 'out_for_delivery' ? 2 : order.deliveryStatus === 'delivered' ? 3 : -1;
+  const steps = stages.map((stage, index) => '<div class="tracking-step ' + (stage.complete ? 'done ' : '') + (index === activeIndex ? 'active' : '') + '">' + stage.label + (stage.time ? '<span class="tracking-time">' + formatTrackingTime(stage.time) + '</span>' : '') + '</div>').join('');
+  const live = order.liveLocation ? '<div class="live-track"><span>Live location is being shared by ' + (order.workerName || 'your delivery partner') + '.</span><a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(order.liveLocation.latitude + ',' + order.liveLocation.longitude) + '" target="_blank" rel="noopener">Track on map</a><span class="tracking-time">Updated ' + formatTrackingTime(order.liveLocation.updatedAt) + '</span></div>' : '';
+  const history = (order.events || []).slice(-4).reverse().map(event => '<div class="tracking-time" style="margin-top:5px;">' + formatTrackingTime(event.at) + ' · ' + event.message + '</div>').join('');
+  return '<div class="tracking-panel"><div class="tracking-title">Delivery tracking</div><div class="tracking-steps">' + steps + '</div>' + live + history + '</div>';
+}
+
+async function loadOrders() {
+  try {
+    loadNotifications();
+    const data = await api('/api/customer/orders');
+    const orders = data.orders || [];
+    const list = document.getElementById('orderList');
+
+    const totalOrders = orders.length;
+    const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.deliveryStatus)).length;
+    const deliveredOrders = orders.filter(o => o.deliveryStatus === 'delivered').length;
+    document.getElementById('totalOrders').textContent = totalOrders;
+    document.getElementById('activeOrders').textContent = activeOrders;
+    document.getElementById('deliveredOrders').textContent = deliveredOrders;
+
+    if (orders.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No orders yet. Place your first order!</p></div>';
+      return;
+    }
+
+    list.innerHTML = orders.map(o => `
+      <div class="order-card" data-delivery-status="${o.deliveryStatus}">
+        <div class="header">
+          <span class="id">${o.id}</span>
+          <div style="display:flex;gap:6px;">
+            <span class="badge badge-${o.paymentStatus}">${o.paymentStatus === 'paid' ? '✅ Paid' : o.paymentStatus === 'partial' ? '💰 Advance Paid' : '⏳ Pending'}</span>
+            <span class="badge badge-${o.deliveryStatus === 'delivered' ? 'delivered' : o.deliveryStatus === 'assigned' ? 'assigned' : 'pending-del'}">${o.deliveryStatus === 'delivered' ? '📦 Delivered' : o.deliveryStatus === 'assigned' ? '🚚 On the Way' : '📋 Pending'}</span>
+          </div>
+        </div>
+        <div><span class="product">${o.product}</span> — <span>${o.quantity} ${o.unit}${o.quantity > 1 ? 's' : ''}</span></div>
+        <div class="details">
+          <div><span class="label">Total:</span> <b>₹${o.total}</b> &nbsp;|&nbsp; <span class="label">Paid:</span> <b>₹${o.advance}</b> ${o.balance > 0 ? `&nbsp;|&nbsp; <span class="label">COD:</span> <b>₹${o.balance}</b>` : ''}</div>
+          <div style="margin-top:4px;"><span class="label">Deliver to:</span><br><span class="addr">${o.address}, ${o.area}, ${o.city} — ${o.pincode}</span></div>
+          ${o.deliveryDate ? `<div style="margin-top:4px;"><span class="label">Delivery Date:</span> ${o.deliveryDate}</div>` : ''}
+          ${o.deliverySlot ? `<div style="margin-top:4px;"><span class="label">Delivery Slot:</span> ${o.deliverySlot}</div>` : ''}
+          ${o.notes ? `<div style="margin-top:4px;"><span class="label">Notes:</span> ${o.notes}</div>` : ''}
+          ${o.workerName ? `<div style="margin-top:4px;"><span class="label">Assigned BE:</span> ${o.workerName}</div>` : ''}
+          ${renderTracking(o)}
+          ${o.deliveredAt ? `<div style="margin-top:4px;"><span class="label">Delivered At:</span> ${new Date(o.deliveredAt).toLocaleString('en-IN')}</div>` : ''}
+${o.deliveryPhoto ? `<img src="${o.deliveryPhoto}" class="photo-preview" alt="Delivery photo">` : ''}
+          ${o.shopLatitude && o.shopLongitude ? `<div style="margin-top:6px;"><a href="https://www.google.com/maps/dir/?api=1&destination=${o.shopLatitude},${o.shopLongitude}" target="_blank" rel="noopener" style="color:var(--rust);font-weight:600;font-size:0.82rem;text-decoration:underline;">📍 Get Directions →</a></div>` : ''}
+        </div>
+        <div class="actions">
+          ${o.deliveryStatus === 'pending' ? `<button class="btn btn-small" onclick="cancelOrder('${o.id}')">Cancel order</button>` : ''}
+          ${['pending', 'assigned'].includes(o.deliveryStatus) ? `<button class="btn btn-secondary btn-small" onclick="rescheduleOrder('${o.id}')">Reschedule</button>` : ''}
+          <button class="btn btn-secondary btn-small" onclick="openSupport('${o.id}')">Need help</button>
+          ${o.deliveryStatus === 'delivered' && !o.rating ? `<button class="btn btn-small" onclick="rateOrder('${o.id}')">Rate delivery</button>` : ''}
+          ${o.deliveryStatus === 'delivered' && !o.damageClaim ? `<button class="btn btn-warn btn-small" onclick="reportDamage('${o.id}')">Report damaged product</button>` : ''}
+          ${o.paymentStatus === 'pending' ? `<button class="btn btn-warn btn-small" onclick="payAdvance('${o.id}')">💰 Pay 25% Advance</button>` : ''}
+          ${o.paymentStatus === 'pending' || o.paymentStatus === 'partial' ? `<button class="btn btn-success btn-small" onclick="payFull('${o.id}')">✅ Pay Full Amount</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+    list.querySelectorAll('.order-card').forEach(card => {
+      const status = card.dataset.deliveryStatus;
+      const badge = card.querySelectorAll('.badge')[1];
+      if (!badge || status !== 'out_for_delivery') return;
+      badge.className = 'badge badge-out-for-delivery';
+      badge.textContent = 'Out for delivery';
+    });
+  } catch (err) {
+    document.getElementById('orderList').innerHTML = `<div class="empty-state"><p style="color:var(--rust)">⚠ ${err.message}</p></div>`;
+  }
+}
+
+async function payAdvance(orderId) {
+  if (!confirm('Proceed to pay 25% advance for this order?')) return;
+  try {
+    await api('/api/order/' + orderId + '/pay-advance', { method: 'PATCH' });
+    alert('✅ Advance payment recorded! Balance to be paid on delivery.');
+    loadOrders();
+  } catch (err) { alert(err.message); }
+}
+
+async function payFull(orderId) {
+  if (!confirm('Proceed to pay the full amount for this order?')) return;
+  try {
+    await api('/api/order/' + orderId + '/pay', { method: 'PATCH' });
+    alert('✅ Full payment recorded! Thank you.');
+    loadOrders();
+  } catch (err) { alert(err.message); }
+}
+
+async function cancelOrder(orderId) {
+  if (!confirm('Cancel this order? Any paid amount will remain on record for the farm team to process.')) return;
+  try {
+    await api('/api/order/' + orderId + '/cancel', { method: 'PATCH' });
+    alert('Your order has been cancelled.');
+    loadOrders();
+  } catch (err) { alert(err.message); }
+}
+async function loadNotifications() { try { const data = await api('/api/customer/notifications'); const items = data.notifications || []; document.getElementById('notificationList').innerHTML = items.length ? '<div style="background:#eff6ff;border-radius:10px;padding:12px;font-size:.82rem;"><b>Recent updates</b><br>' + items.slice(0, 3).map(item => '<span style="display:block;margin-top:5px;">' + new Date(item.createdAt).toLocaleString('en-IN') + ' · ' + item.message + '</span>').join('') + '</div>' : ''; } catch {} }
+
+async function rescheduleOrder(orderId) {
+  const deliveryDate = prompt('New delivery date (YYYY-MM-DD):');
+  if (!deliveryDate) return;
+  const deliverySlot = prompt('Choose a delivery slot: 08:00-11:00, 11:00-14:00, 14:00-17:00, or 17:00-20:00');
+  if (!deliverySlot) return;
+  try { await api('/api/order/' + orderId + '/reschedule', { method: 'PATCH', body: JSON.stringify({ deliveryDate, deliverySlot }) }); alert('Your delivery has been rescheduled.'); loadOrders(); }
+  catch (err) { alert(err.message); }
+}
+async function openSupport(orderId) {
+  const subject = prompt('What do you need help with?'); if (!subject) return;
+  const message = prompt('Describe the issue:'); if (!message) return;
+  try { await api('/api/customer/support', { method: 'POST', body: JSON.stringify({ orderId, subject, message }) }); alert('Your support request has been sent.'); }
+  catch (err) { alert(err.message); }
+}
+async function rateOrder(orderId) {
+  const rating = Number(prompt('Rate this delivery from 1 to 5:')); if (!rating) return;
+  const comment = prompt('Optional comment:') || '';
+  try { await api('/api/order/' + orderId + '/rating', { method: 'POST', body: JSON.stringify({ rating, comment }) }); alert('Thank you for your feedback.'); loadOrders(); }
+  catch (err) { alert(err.message); }
+}
+
+async function reportDamage(orderId) {
+  const description = prompt('Describe the damage to the delivered product:'); if (!description) return;
+  const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/jpeg,image/png';
+  input.onchange = function() { const file = input.files[0]; if (!file) return; if (file.size > 5500000) return alert('Choose an image smaller than 5 MB.'); const reader = new FileReader(); reader.onload = async function() { try { await api('/api/order/' + orderId + '/damage-claim', { method: 'POST', body: JSON.stringify({ description, photo: reader.result }) }); alert('Your damage claim was submitted for review.'); loadOrders(); } catch (err) { alert(err.message); } }; reader.readAsDataURL(file); }; input.click();
+}
+
+function logout() {
+  localStorage.removeItem('uf_token');
+  localStorage.removeItem('uf_user');
+  window.location.href = '/login.html';
+}
+
+loadOrders();
+setInterval(loadOrders, 30000);
+</script>
+<!-- Google Translate Element (hidden) -->
+<div id="google_translate_element" style="display:none;position:absolute;top:-9999px;left:-9999px;"></div>
+<style>
+.goog-te-banner-frame.skiptranslate,.goog-te-gadget-simple,.goog-te-menu-frame,.goog-te-menu-value{display:none!important;}
+.goog-te-gadget{color:transparent!important;font-size:0!important;}
+body{top:0!important;}
+.skiptranslate{display:none!important;height:0!important;}
+</style>
+<script src="../assets/translator-enhanced.js"></script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
