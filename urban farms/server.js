@@ -193,8 +193,49 @@ async function sendOtpSms(phone, otp, role) {
 })();
 
 app.use(helmet({ contentSecurityPolicy: false }));
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://127.0.0.1:3000').split(',').map(value => value.trim());
-app.use(cors({ origin(origin, callback) { if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true); return callback(new Error('Origin not allowed')); }, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }));
+// ==================== CORS CONFIGURATION ====================
+// Allow the deployed Render site, local development, and any additional
+// domains supplied through the ALLOWED_ORIGINS environment variable.
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://urban-feather-farms.onrender.com',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+];
+
+const ENV_ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(value => value.trim())
+  .filter(Boolean);
+
+const ALLOWED_ORIGINS = [...new Set([
+  ...DEFAULT_ALLOWED_ORIGINS,
+  ...ENV_ALLOWED_ORIGINS
+])];
+
+console.log('[CORS] Allowed origins:', ALLOWED_ORIGINS);
+
+app.use(cors({
+  origin(origin, callback) {
+    // Requests such as same-origin/server-to-server requests may not contain
+    // an Origin header. These should be allowed.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.warn(`[CORS] Blocked origin: ${origin}`);
+    return callback(new Error(`Origin not allowed: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
