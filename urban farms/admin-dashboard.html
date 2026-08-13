@@ -967,6 +967,7 @@ async function loadWorkers() {
         (w.liveLocation ? '<div style="margin-top:8px;font-size:.78rem;"><a href="https://www.google.com/maps?q=' + w.liveLocation.latitude + ',' + w.liveLocation.longitude + '" target="_blank" rel="noopener">📍 View live location</a><br><span style="color:#5a5646;">Updated ' + new Date(w.lastLocationAt).toLocaleTimeString('en-IN') + '</span></div>' : '') +
         '<div class="wc-actions">' +
           (w.status === 'pending' ? '<button class="btn-sm btn-sm-success" onclick="approveWorker(\'' + w.id + '\')">Approve</button><button class="btn-sm btn-sm-danger" onclick="rejectWorker(\'' + w.id + '\')">Reject</button>' : '') +
+          '<button class="btn-sm btn-sm-warn" onclick="resetWorkerCredentials(\'' + w.id + '\')">Reset Login</button>' +
           '<button class="btn-sm btn-sm-secondary" onclick="showAssignArea(\'' + w.id + '\')">Assign Area</button>' +
           '<button class="btn-sm btn-sm-secondary" onclick="showWorkerVoiceNotes(\'' + w.id + '\')">Voice Notes</button>' +
           '<button class="btn-sm btn-sm-' + (w.active ? 'warn' : 'success') + '" onclick="toggleWorker(\'' + w.id + '\')">' + (w.active ? '❌ Deactivate' : '✅ Activate') + '</button>' +
@@ -984,6 +985,19 @@ async function approveWorker(id) {
 async function rejectWorker(id) {
   if (!confirm('Reject this BE registration?')) return;
   try { await api('/api/admin/worker/' + id + '/reject', { method: 'PATCH' }); loadWorkers(); } catch (err) { alert(err.message); }
+}
+
+async function resetWorkerCredentials(id) {
+  const password = prompt('Enter a new BE password (at least 8 characters):');
+  if (password === null) return;
+  if (password.length < 8) { alert('Password must be at least 8 characters.'); return; }
+  const pin = prompt('Enter a new 4 to 6 digit BE PIN:');
+  if (pin === null) return;
+  if (!/^\d{4,6}$/.test(pin)) { alert('PIN must be 4 to 6 digits.'); return; }
+  try {
+    await api('/api/admin/worker/' + id + '/reset-credentials', { method: 'POST', body: JSON.stringify({ password, pin }) });
+    alert('BE login credentials have been reset. Share them securely with the BE.');
+  } catch (err) { alert(err.message); }
 }
 
 async function toggleWorker(id) {
