@@ -462,6 +462,19 @@ app.post('/api/admin/worker', authMiddleware(['admin']), (req, res) => {
   global.__workers.push(worker); saveWorkers();
   return res.json({ ok: true, worker: { id: worker.id, name: worker.name, phone: worker.phone, active: true, approved: true, assignedArea: worker.assignedArea, createdAt: worker.createdAt } });
 });
+app.post('/api/admin/worker/:id/reset-credentials', authMiddleware(['admin']), (req, res) => {
+  const worker = global.__workers.find(w => w.id === req.params.id);
+  if (!worker) return res.status(404).json({ error: 'Worker not found' });
+  const { password, pin } = req.body;
+  if (!password || String(password).length < 8) return res.status(400).json({ error: 'Worker password must be at least 8 characters' });
+  if (!/^\d{4,6}$/.test(String(pin || ''))) return res.status(400).json({ error: 'Worker PIN must be 4 to 6 digits' });
+  worker.passwordHash = bcrypt.hashSync(String(password), 10);
+  worker.pinHash = bcrypt.hashSync(String(pin), 10);
+  worker.credentialsUpdatedAt = new Date().toISOString();
+  saveWorkers();
+  audit(req.user.id, 'worker_credentials_reset', worker.id);
+  return res.json({ ok: true, message: 'Worker credentials reset' });
+});
 app.patch('/api/admin/worker/:id/area', authMiddleware(['admin']), (req, res) => {
   const worker = global.__workers.find(w => w.id === req.params.id);
   if (!worker) return res.status(404).json({ error: 'Worker not found' });
