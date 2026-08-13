@@ -186,9 +186,26 @@ async function sendOtpSms(phone, otp, role) {
   const normalizedPhone = normalizePhone(ADMIN_PHONE);
   if (!normalizedPhone || !ADMIN_PASSWORD) return;
   const admins = global.__customers.filter(c => c.role === 'admin');
-  const hashed = bcrypt.hashSync(ADMIN_PASSWORD, 10); let changed = false;
-  if (admins.length === 0) { global.__customers.push({ id: 'admin-001', name: ADMIN_NAME, phone: normalizedPhone, passwordHash: hashed, role: 'admin', createdAt: new Date().toISOString() }); changed = true; }
-  else { for (const a of admins) { if (a.name !== ADMIN_NAME || a.phone !== normalizedPhone || !a.passwordHash) { a.name = ADMIN_NAME; a.phone = normalizedPhone; a.passwordHash = hashed; a.updatedAt = new Date().toISOString(); changed = true; } } }
+  let changed = false;
+  // Environment credentials are the source of truth. The old implementation
+  // only replaced a missing hash, so changing ADMIN_PASSWORD in .env left the
+  // previously stored password active and permanently locked out the admin.
+  let admin = admins.find(a => a.id === 'admin-001') || admins.find(a => a.phone === normalizedPhone) || admins[0];
+  if (!admin) {
+    admin = { id: 'admin-001', name: ADMIN_NAME, phone: normalizedPhone, passwordHash: bcrypt.hashSync(ADMIN_PASSWORD, 10), role: 'admin', createdAt: new Date().toISOString() };
+    global.__customers.push(admin);
+    changed = true;
+  } else {
+    const passwordHash = String(admin.passwordHash || '');
+    const passwordMatches = /^\$2[aby]\$\d{2}\$/.test(passwordHash) && bcrypt.compareSync(ADMIN_PASSWORD, passwordHash);
+    if (admin.name !== ADMIN_NAME || admin.phone !== normalizedPhone || !passwordMatches) {
+      admin.name = ADMIN_NAME;
+      admin.phone = normalizedPhone;
+      admin.passwordHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+      admin.updatedAt = new Date().toISOString();
+      changed = true;
+    }
+  }
   if (changed) saveCustomers();
 })();
 
