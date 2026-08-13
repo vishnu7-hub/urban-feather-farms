@@ -326,23 +326,32 @@ app.post('/api/auth/worker/send-otp', authLimiter, async (req, res) => {
   catch (error) { return res.status(502).json({ error: 'Unable to send OTP right now. Please try again later.' }); }
 });
 app.post('/api/auth/worker/login', authLimiter, (req, res) => {
-  const { phone, otp, bypassCode, password, pin } = req.body; const normPhone = normalizePhone(phone);
-  if (normPhone && bypassCode && String(bypassCode) === String(ADMIN_BYPASS_CODE) && normalizePhone(ADMIN_PHONE) === normPhone) {
-    const admin = global.__customers.find(c => c.phone === normPhone && c.role === 'admin');
-    if (!admin) return res.status(401).json({ error: 'Admin account not found' });
-    const token = jwt.sign({ id: admin.id, phone: admin.phone, name: admin.name, role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
-    return res.json({ ok: true, token, user: { id: admin.id, name: admin.name, phone: admin.phone, role: 'admin', bypass: true } });
+  try {
+    const { phone, otp, bypassCode, password, pin } = req.body; const normPhone = normalizePhone(phone);
+    if (normPhone && bypassCode && String(bypassCode) === String(ADMIN_BYPASS_CODE) && normalizePhone(ADMIN_PHONE) === normPhone) {
+      const admin = global.__customers.find(c => c.phone === normPhone && c.role === 'admin');
+      if (!admin) return res.status(401).json({ error: 'Admin account not found' });
+      const token = jwt.sign({ id: admin.id, phone: admin.phone, name: admin.name, role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ ok: true, token, user: { id: admin.id, name: admin.name, phone: admin.phone, role: 'admin', bypass: true } });
+    }
+    const worker = global.__workers.find(w => w.phone === normPhone);
+    if (!worker) return res.status(401).json({ error: 'Invalid mobile number' });
+    if (worker.approved !== true) return res.status(403).json({ error: 'Your worker request is still pending admin approval' });
+    if (worker.active === false) return res.status(403).json({ error: 'Your worker account is inactive' });
+    if (password || pin) {
+      const passwordHash = String(worker.passwordHash || '');
+      const pinHash = String(worker.pinHash || '');
+      const validPasswordHash = /^\$2[aby]\$\d{2}\$/.test(passwordHash);
+      const validPinHash = /^\$2[aby]\$\d{2}\$/.test(pinHash);
+      if (!validPasswordHash || !validPinHash) return res.status(409).json({ error: 'Your account needs new credentials from the admin' });
+      if (!bcrypt.compareSync(password || '', passwordHash) || !bcrypt.compareSync(pin || '', pinHash)) return res.status(401).json({ error: 'Invalid worker credentials' });
+    } else if (!otp || !verifyOtp('worker', normPhone, otp)) return res.status(401).json({ error: 'Enter your worker password and PIN' });
+    const token = jwt.sign({ id: worker.id, phone: worker.phone, name: worker.name, role: 'worker' }, JWT_SECRET, { expiresIn: '30d' });
+    return res.json({ ok: true, token, user: { id: worker.id, name: worker.name, phone: worker.phone, role: 'worker' } });
+  } catch (error) {
+    console.error('[Worker login failed]', error.message);
+    return res.status(500).json({ error: 'Unable to complete BE login. Check the server logs and try again.' });
   }
-  const worker = global.__workers.find(w => w.phone === normPhone);
-  if (!worker) return res.status(401).json({ error: 'Invalid mobile number' });
-  if (worker.approved !== true) return res.status(403).json({ error: 'Your worker request is still pending admin approval' });
-  if (worker.active === false) return res.status(403).json({ error: 'Your worker account is inactive' });
-  if (password || pin) {
-    if (!worker.passwordHash || !worker.pinHash) return res.status(409).json({ error: 'Your account needs new credentials from the admin' });
-    if (!bcrypt.compareSync(password || '', worker.passwordHash) || !bcrypt.compareSync(pin || '', worker.pinHash)) return res.status(401).json({ error: 'Invalid worker credentials' });
-  } else if (!otp || !verifyOtp('worker', normPhone, otp)) return res.status(401).json({ error: 'Enter your worker password and PIN' });
-  const token = jwt.sign({ id: worker.id, phone: worker.phone, name: worker.name, role: 'worker' }, JWT_SECRET, { expiresIn: '30d' });
-  return res.json({ ok: true, token, user: { id: worker.id, name: worker.name, phone: worker.phone, role: 'worker' } });
 });
 app.post('/api/auth/shop/send-otp', authLimiter, async (req, res) => {
   const { phone } = req.body; const normPhone = normalizePhone(phone);
@@ -363,11 +372,18 @@ app.post('/api/auth/shop/login', authLimiter, (req, res) => {
   return res.json({ ok: true, token, user: { id: shopOwner.id, name: shopOwner.name, phone: shopOwner.phone, role: shopOwner.role || 'shop' } });
 });
 app.post('/api/auth/admin/login', authLimiter, (req, res) => {
-  const { phone, password } = req.body; const normPhone = normalizePhone(phone);
-  const admin = global.__customers.find(c => c.phone === normPhone && c.role === 'admin');
-  if (!admin || !admin.passwordHash || !bcrypt.compareSync(password || '', admin.passwordHash)) return res.status(401).json({ error: 'Invalid admin credentials' });
-  const token = jwt.sign({ id: admin.id, phone: admin.phone, name: admin.name, role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
-  return res.json({ ok: true, token, user: { id: admin.id, name: admin.name, phone: admin.phone, role: 'admin' } });
+  try {
+    const { phone, password } = req.body; const normPhone = normalizePhone(phone);
+    const admin = global.__customers.find(c => c.phone === normPhone && c.role === 'admin');
+    const passwordHash = String(admin?.passwordHash || '');
+    const isValidHash = /^\$2[aby]\$\d{2}\$/.test(passwordHash);
+    if (!admin || !isValidHash || !bcrypt.compareSync(password || '', passwordHash)) return res.status(401).json({ error: 'Invalid admin credentials' });
+    const token = jwt.sign({ id: admin.id, phone: admin.phone, name: admin.name, role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+    return res.json({ ok: true, token, user: { id: admin.id, name: admin.name, phone: admin.phone, role: 'admin' } });
+  } catch (error) {
+    console.error('[Admin login failed]', error.message);
+    return res.status(500).json({ error: 'Unable to complete admin login. Check the server logs and try again.' });
+  }
 });
 
 // ========== WORKER MANAGEMENT (ADMIN) ==========
