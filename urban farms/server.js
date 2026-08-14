@@ -214,6 +214,8 @@ app.use(helmet({ contentSecurityPolicy: false }));
 // Allow the deployed Render site, local development, and any additional
 // domains supplied through the ALLOWED_ORIGINS environment variable.
 const DEFAULT_ALLOWED_ORIGINS = [
+  'https://urbanfeatherfarms.in',
+  'https://www.urbanfeatherfarms.in',
   'https://urban-feather-farms.onrender.com',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
